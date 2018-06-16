@@ -2,6 +2,6 @@
 ## Interface: 70300
 ## Notes: Highlights Lifebloom When It Is Ready To Be Bloomed
 ## Author: Click @ Tichondrius
-## Version: 1.0
+## Version: 1.1
 
 LifebloomGlow.lua
