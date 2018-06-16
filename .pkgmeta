@@ -1,1 +1,11 @@
 package-as: LifebloomGlow
+
+enable-nolib-creation: no
+
+manual-changelog:
+ filename: changelog.txt
+
+ignore:
+ - README.md
+ - changelog.txt
+ 
