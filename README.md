@@ -17,3 +17,5 @@ Frames Affected:
 Target Frame
 
 Raid Frames
+
+Where to Download: [CURSEFORGE](https://www.curseforge.com/wow/addons/lifebloom-glow)
