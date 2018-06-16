@@ -15,4 +15,5 @@ This addon is lightweight, and intended to only be functional with the default b
 Frames Affected:
 
 Target Frame
+
 Raid Frames
