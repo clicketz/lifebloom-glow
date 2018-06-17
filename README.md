@@ -1,21 +1,21 @@
-# Lifebloom Glow
+#Lifebloom Glow
 
-TL;DR This addon puts a glow around lifebloom's icon when it is in the pandemic window.
+*TL;DR This is an extremely lightweight addon that puts a glow around lifebloom's icon when it is in the pandemic window.*
 
-At 30% of an initial duration of a dot/hot you are able to recast that ability without losing any damage or healing from that ability.
+The "pandemic window" is the window of time in which you can recast a hot or dot and have the rest of the damage or healing "roll over" into the new hot/dot.
 
-While the same holds true for lifebloom, there is a secondary effect that happens when you refresh it in this 30% window: The "bloom" that normally only happens when you let it expire or it gets dispelled gets triggered.
+When you refresh lifebloom in this window of time, there is a secondary effect that happens: The "bloom" that normally only happens when you let it expire or it gets dispelled gets triggered.
 
-It is because of this that it is very important to only refresh lifebloom in this important window.
+Because of this, it is recommended to always refresh lifebloom in this important window of time. However, there is no official way to tell when exactly this window is available.
 
-This addon was meant to eliminate the guesswork involved with knowing when to refresh Lifebloom by putting a glow border (the same border that is used for dispellable debuffs) around lifebloom when it is in the correct window of time to be bloomed.
+This addon was meant to eliminate the guesswork involved with knowing when to refresh Lifebloom by putting a glow border (the same border that is used for dispellable debuffs) around lifebloom when it is in the correct pandemic window.
 
-This addon is lightweight, and intended to only be functional with the default blizzard frames.
+**Notes:**
+- Only Blizzard frames are currently supported (Raid Frames, TargetFrame, FocusFrame)
 
-Frames Affected:
+**Contribution:**
+- [Report bugs](https://wow.curseforge.com/projects/lifebloom-glow/issues)
 
-Target Frame
-
-Raid Frames
-
-Where to Download: **[CURSEFORGE](https://www.curseforge.com/wow/addons/lifebloom-glow)**
+**Download:**
+[WoWInterface](https://www.wowinterface.com/downloads/info24684-LifebloomGlow.html)
+[Curseforge](https://www.curseforge.com/wow/addons/lifebloom-glow)
