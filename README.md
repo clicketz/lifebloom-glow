@@ -1,4 +1,4 @@
-#Lifebloom Glow
+# Lifebloom Glow
 
 *TL;DR This is an extremely lightweight addon that puts a glow around lifebloom's icon when it is in the pandemic window.*
 
