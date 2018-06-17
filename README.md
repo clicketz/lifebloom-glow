@@ -17,5 +17,7 @@ This addon was meant to eliminate the guesswork involved with knowing when to re
 - [Report bugs](https://wow.curseforge.com/projects/lifebloom-glow/issues)
 
 **Download:**
+
 [WoWInterface](https://www.wowinterface.com/downloads/info24684-LifebloomGlow.html)
+
 [Curseforge](https://www.curseforge.com/wow/addons/lifebloom-glow)
