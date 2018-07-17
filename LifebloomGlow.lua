@@ -11,7 +11,7 @@ cf:SetScript("OnEvent", function(self, event)
 
 	--Compact Unit Frame
 	function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, unit, index, filter)
-		local buffName, _, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal,
+		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal,
 		spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod, _ = UnitBuff(unit, index, filter)
 
 		if (spellId == 33763 and casterIsPlayer) then
@@ -45,8 +45,8 @@ cf:SetScript("OnEvent", function(self, event)
 		local selfName = self:GetName()
 
 		for i = 1, MAX_TARGET_BUFFS do
-		local buffName, _, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal,
-		spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod, _ = UnitBuff(self.unit, i, nil)
+		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal,
+		spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(self.unit, i, nil)
 
 			if buffName then
 				if (spellId == 33763 and casterIsPlayer) then
