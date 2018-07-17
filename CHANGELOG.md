@@ -1,7 +1,3 @@
-**v1.1**
+**v2.0**
 
-- Code cleanup
-
-**v1.0**
-
-- Release
+- BfA Compatibility
