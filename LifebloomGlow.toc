@@ -1,7 +1,7 @@
 ## Title: Lifebloom Glow
-## Interface: 80000
+## Interface: 90001
 ## Notes: Highlights Lifebloom When It Is Ready To Be Bloomed
 ## Author: Click @ Tichondrius
-## Version: 2.0
+## Version: 9.0.1.1
 
 LifebloomGlow.lua
