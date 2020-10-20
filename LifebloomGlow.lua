@@ -10,9 +10,10 @@ cf:SetScript("OnEvent", function(self, event)
 	end
 
 	--Compact Unit Frame
-	function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, unit, index, filter)
-		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal,
-		spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod, _ = UnitBuff(unit, index, filter)
+	function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, index, ...)
+        
+        local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _,
+        spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = ...
 
 		if (spellId == 33763 and casterIsPlayer) then
 			local timeRemaining = (expirationTime - GetTime()) / timeMod
@@ -21,8 +22,8 @@ cf:SetScript("OnEvent", function(self, event)
 			if (not buffFrame.glow) then
 				local glow = buffFrame:CreateTexture(nil, "OVERLAY")
 				glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
-				glow:SetPoint("TOPLEFT", -3, 3)
-				glow:SetPoint("BOTTOMRIGHT", 3, -3)
+				glow:SetPoint("TOPLEFT", -2.5, 2.5)
+				glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
 				glow:SetBlendMode("ADD")
 				buffFrame.glow = glow
 			end
@@ -56,6 +57,8 @@ cf:SetScript("OnEvent", function(self, event)
 						local timeRemaining = (expirationTime - GetTime()) / timeMod
 						local refreshTime = duration * 0.3
 						local frameStealable = _G[frameName.."Stealable"]
+                        frameStealable:SetHeight(frame:GetHeight() + 3)
+                        frameStealable:SetWidth(frame:GetWidth() + 3)
 
 						if (timeRemaining <= refreshTime) then
 							frameStealable:Show()
