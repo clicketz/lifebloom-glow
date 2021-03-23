@@ -1,3 +1,8 @@
+**v9.0.5.2**
+
+- BossFrame bugfix
+- Minor efficiency updates
+
 **v9.0.5.1**
 
 - Total rewrite of code
