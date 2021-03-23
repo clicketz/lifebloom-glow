@@ -1,3 +1,7 @@
+**v9.0.5.3**
+
+- Fixed borders not disappearing properly
+
 **v9.0.5.2**
 
 - BossFrame bugfix
