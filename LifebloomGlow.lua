@@ -81,7 +81,7 @@ function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, index, ...)
 
                     if unitBuffFrame.displayedUnit then
                         for i = 1, MAX_TARGET_BUFFS do
-                            local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unitBuffFrame.displayedUnit, i, "HELPFUL")
+                            local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitAura(unitBuffFrame.displayedUnit, i, "PLAYER HELPFUL")
 
                             if buffName then
                                 if (spellId == 33763 and casterIsPlayer) then
@@ -125,8 +125,10 @@ end
 
 -- Target / Focus frames
 function TargetFrame_UpdateAuras_Hook(self)
+    if not unit[self] then return end -- Fix for BossFrames triggering this event
+
     for i = 1, MAX_TARGET_BUFFS do
-        local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unit[self], i, "HELPFUL")
+        local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitAura(unit[self], i, "PLAYER HELPFUL")
 
         -- Making our own glow frame for Target because Blizzard constantly updates default stealable
         -- border which often results in odd behaviors.
@@ -153,7 +155,7 @@ function TargetFrame_UpdateAuras_Hook(self)
                             lastUpdate[self] = 0
 
                             for i = 1, MAX_TARGET_BUFFS do
-                                local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unit[self], i, "HELPFUL")
+                                local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unit[self], i, "PLAYER HELPFUL")
 
                                 if buffName then
                                     if (spellId == 33763 and casterIsPlayer) then
