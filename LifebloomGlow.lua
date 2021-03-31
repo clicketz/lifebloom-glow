@@ -5,19 +5,19 @@ This number represents the number of seconds between each update.
 The lower the THROTTLE_VALUE the more accurate the addon is,
 but also the more CPU intensive it is.
 
-Default: 0.1
+Default: 0.01
+Balanced: 0.1
 
 ]]
 
 
-local THROTTLE_VALUE = 0.1
+local THROTTLE_VALUE = 0.01
 
 ---------------------------
 
 
 -- Only load for druids
-local _, playerClass = UnitClass("player")
-if (playerClass ~= "DRUID") then
+if (select(2, UnitClass("player")) ~= "DRUID") then
     print("|cFF50C878L|rifebloom |cFF50C878G|rlow Disabled")
     return
 end
@@ -53,8 +53,7 @@ local unitBuffFrame, frame
 
 -- Compact Unit Frames
 function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, index, ...)
-    local name, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _,
-    spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = ...
+    local _, _, _, _, _, _, _, _, _, spellId, _, _, casterIsPlayer = ...
 
     if (buffFrame and not buffFrame.glow) then
         local glow = buffFrame:CreateTexture(nil, "OVERLAY")
@@ -81,7 +80,8 @@ function CompactUnitFrame_UtilSetBuff_Hook(buffFrame, index, ...)
 
                     if unitBuffFrame.displayedUnit then
                         for i = 1, MAX_TARGET_BUFFS do
-                            local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unitBuffFrame.displayedUnit, i)
+                            local buffName, _, _, _, duration, expirationTime, _, _, _, spellId,
+                            _, _, casterIsPlayer, _, timeMod = UnitBuff(unitBuffFrame.displayedUnit, i)
 
                             if buffName then
                                 if (spellId == 33763 and casterIsPlayer) then
@@ -125,10 +125,10 @@ end
 
 -- Target / Focus frames
 function TargetFrame_UpdateAuras_Hook(self)
-    if not unit[self] then return end -- Fix for BossFrames triggering this event
+    if not unit[self] then return end -- ignore bossframes
 
     for i = 1, MAX_TARGET_BUFFS do
-        local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unit[self], i)
+        local buffName, _, _, _, _, _, _, _, _, spellId, _, _, casterIsPlayer = UnitBuff(unit[self], i)
 
         -- Making our own glow frame for Target because Blizzard constantly updates default stealable
         -- border which often results in odd behaviors.
@@ -155,12 +155,13 @@ function TargetFrame_UpdateAuras_Hook(self)
                             lastUpdate[self] = 0
 
                             for i = 1, MAX_TARGET_BUFFS do
-                                local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, casterIsPlayer, nameplateShowAll, timeMod = UnitBuff(unit[self], i)
+                                local buffName, _, _, _, duration, expirationTime, _, _, _, spellId,
+                                _, _, casterIsPlayer, _, timeMod = UnitBuff(unit[self], i)
 
                                 if buffName then
                                     if (spellId == 33763 and casterIsPlayer) then
                                         frame = _G[self:GetName().. "Buff"..i]
-                                        if (frame and icon) then
+                                        if frame then
                                             local timeRemaining = (expirationTime - GetTime()) / timeMod
                                             local refreshTime = duration * 0.3
 
