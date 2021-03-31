@@ -1,3 +1,8 @@
+**v9.0.5.4**
+
+- Minor code cleanup
+- Changed default throttle value
+
 **v9.0.5.3**
 
 - Fixed borders not disappearing properly
