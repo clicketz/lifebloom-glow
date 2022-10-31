@@ -2,10 +2,10 @@ package-as: LifebloomGlow
 
 enable-nolib-creation: no
 
-#manual-changelog:
-# filename: CHANGELOG.md
-# markup-type: markdown
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
 
 ignore:
- - README.md
- - CHANGELOG.md
+  - README.md
+  - generate_changelog.sh
