@@ -23,8 +23,10 @@ globals = {
     "DevTools_Dump",
     "SlashCmdList",
     "InterfaceOptionsFrame_OpenToCategory",
+    "InterfaceOptionsFramePanelContainer",
     "UnitClass",
     "hooksecurefunc",
     "TargetFrame",
     "FocusFrame",
+    "ColorPickerFrame",
 }
