@@ -101,8 +101,8 @@ function addon:PLAYER_LOGIN()
 
     addon:Options()
 
-    SLASH_LBG1 = "/lbg"
-    function SlashCmdList.LBG(msg)
+    SLASH_LIFEBLOOMGLOW1 = "/lbg"
+    function SlashCmdList.LIFEBLOOMGLOW(msg)
         if msg == "help" then
             addon:Print("Available commands:")
             addon:Print("/lbg help - Show this help")
