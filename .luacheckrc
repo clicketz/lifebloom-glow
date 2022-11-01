@@ -24,6 +24,7 @@ globals = {
     "SlashCmdList",
     "InterfaceOptionsFrame_OpenToCategory",
     "InterfaceOptionsFramePanelContainer",
+    "InterfaceOptions_AddCategory",
     "UnitClass",
     "hooksecurefunc",
     "TargetFrame",
