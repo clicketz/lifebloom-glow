@@ -1,9 +1,11 @@
 ## Title: Lifebloom Glow
-## Interface: 90005
+## Interface: 100000
 ## Notes: Highlights Lifebloom When It Is Ready To Be Bloomed
 ## Author: clicket
 ## Version: @project-version@
 ## X-Curse-Project-ID: 296075
 ## X-WoWI-ID: 24684
+## SavedVariables: LifebloomGlowDB
 
+Options.lua
 LifebloomGlow.lua
