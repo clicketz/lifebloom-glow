@@ -51,9 +51,9 @@ function addon:CompactUnitFrame(buffFrame, aura)
 
     buffFrame.glow:Hide()
 
-    if aura.spellId == 33763 and aura.isFromPlayerOrPlayerPet then
+    if (aura.spellId == 33763 or aura.spellId == 188550) and aura.isFromPlayerOrPlayerPet then
         aura.isGlow = true
-        self.aura = aura.auraInstanceID
+        self.instances[aura.auraInstanceID] = true
         self.auras[buffFrame] = aura
         self.update:Show()
     elseif self.auras[buffFrame] then
@@ -65,8 +65,8 @@ end
 -- Target/Focus Frame Core
 ---------------------------
 function addon:TargetFocus(root)
-    for frame in root.auraPools:EnumerateActive() do
-        local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, frame.auraInstanceID)
+    for buffFrame in root.auraPools:EnumerateActive() do
+        local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID)
 
         if not frame.glow then
             local glow = frame:CreateTexture(nil, "OVERLAY")
@@ -74,18 +74,18 @@ function addon:TargetFocus(root)
             glow:SetPoint("TOPLEFT", -2.5, 2.5)
             glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
             glow:SetBlendMode("ADD")
-            frame.glow = glow
+            buffFrame.glow = glow
         end
 
-        frame.glow:Hide()
+        buffFrame.glow:Hide()
 
-        if aura.spellId == 33763 and aura.isFromPlayerOrPlayerPet then
+        if (aura.spellId == 33763 or aura.spellId == 188550) and aura.isFromPlayerOrPlayerPet then
             aura.isGlow = true
-            self.aura = aura.auraInstanceID
-            self.auras[frame] = aura
+            self.instances[aura.auraInstanceID] = true
+            self.auras[buffFrame] = aura
             self.update:Show()
-        elseif self.auras[frame] then
-            self.auras[frame] = nil
+        elseif self.auras[buffFrame] then
+            self.auras[buffFrame] = nil
         end
     end
 end
@@ -96,8 +96,8 @@ end
 function addon:PLAYER_LOGIN()
     LifebloomGlowDB = LifebloomGlowDB or CopyTable(defaults)
     self.db = LifebloomGlowDB
-
     self.auras = {}
+    self.instances = {}
 
     addon:Options()
 
@@ -147,30 +147,33 @@ function addon:PLAYER_LOGIN()
                 s:Hide()
             end
 
-            for frame, aura in pairs(self.auras) do
+            for buffFrame, aura in pairs(self.auras) do
                 if aura.expirationTime < GetTime() then
-                    frame.glow:Hide()
-                    self.auras[frame] = nil
-                elseif aura.auraInstanceID == self.aura then
+                    buffFrame.glow:Hide()
+                    self.auras[buffFrame] = nil
+                    if self.instances[aura.auraInstanceID] then
+                        self.instances[aura.auraInstanceID] = nil
+                    end
+                elseif self.instances[aura.auraInstanceID] then
                     local timeRemaining = (aura.expirationTime - GetTime()) / aura.timeMod
                     local refreshTime = aura.duration * 0.3
 
                     if (timeRemaining <= refreshTime) then
                         if self.db.glow and aura.isGlow then
-                            frame.glow:SetVertexColor(unpack(self.db.glowColor))
+                            buffFrame.glow:SetVertexColor(unpack(self.db.glowColor))
                         end
                         if self.db.sotf and aura.isSotf then
-                            frame.glow:SetVertexColor(unpack(self.db.sotfColor))
+                            buffFrame.glow:SetVertexColor(unpack(self.db.sotfColor))
                         end
                         if aura.isGlow and self.db.glow or aura.isSotf and self.db.sotf then
-                            frame.glow:Show()
+                            buffFrame.glow:Show()
                         end
                     else
-                        frame.glow:Hide()
+                        buffFrame.glow:Hide()
                     end
                 else
-                    frame.glow:Hide()
-                    self.auras[frame] = nil
+                    buffFrame.glow:Hide()
+                    self.auras[buffFrame] = nil
                 end
             end
         end
