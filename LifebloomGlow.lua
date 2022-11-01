@@ -41,7 +41,12 @@ end
 ---------------------------
 function addon:CompactUnitFrame(buffFrame, aura)
     if not buffFrame.glow then
-        local glow = buffFrame:CreateTexture(nil, "OVERLAY")
+        -- Use this frame to ensure the glow is always on top of the buff frame
+        local glowFrame = CreateFrame("Frame", nil, buffFrame)
+        glowFrame:SetAllPoints()
+        glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
+
+        local glow = glowFrame:CreateTexture(nil, "OVERLAY")
         glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
         glow:SetPoint("TOPLEFT", -2.5, 2.5)
         glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
@@ -68,8 +73,13 @@ function addon:TargetFocus(root)
     for buffFrame in root.auraPools:EnumerateActive() do
         local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID)
 
-        if not frame.glow then
-            local glow = frame:CreateTexture(nil, "OVERLAY")
+        if not buffFrame.glow then
+            -- Use this frame to ensure the glow is always on top of the buff frame
+            local glowFrame = CreateFrame("Frame", nil, buffFrame)
+            glowFrame:SetAllPoints()
+            glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
+
+            local glow = glowFrame:CreateTexture(nil, "OVERLAY")
             glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
             glow:SetPoint("TOPLEFT", -2.5, 2.5)
             glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
