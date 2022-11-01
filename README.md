@@ -23,4 +23,12 @@ This addon was meant to eliminate the guesswork involved with knowing when to re
 **Contribution**
 
 - [Report bugs](https://www.curseforge.com/wow/addons/lifebloom-glow/issues "Report bugs")
-- [Source code](https://github.com/clicketz/lifebloom-glow "Source code")
+
+
+**Download:**
+
+[WoWInterface](https://www.wowinterface.com/downloads/info24684-LifebloomGlow.html)
+
+[Curseforge](https://www.curseforge.com/wow/addons/lifebloom-glow)
+
+[Wago](https://addons.wago.io/addons/lifebloom-glow)
