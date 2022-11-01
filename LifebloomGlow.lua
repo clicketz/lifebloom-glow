@@ -48,6 +48,7 @@ function addon:CompactUnitFrame(buffFrame, aura)
 
         local glow = glowFrame:CreateTexture(nil, "OVERLAY")
         glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
+        glow:SetDesaturated(true)
         glow:SetPoint("TOPLEFT", -2.5, 2.5)
         glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
         glow:SetBlendMode("ADD")
@@ -63,6 +64,8 @@ function addon:CompactUnitFrame(buffFrame, aura)
         self.update:Show()
     elseif self.auras[buffFrame] then
         self.auras[buffFrame] = nil
+    else
+        aura.isGlow = false
     end
 end
 
@@ -81,6 +84,7 @@ function addon:TargetFocus(root)
 
             local glow = glowFrame:CreateTexture(nil, "OVERLAY")
             glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
+            glow:SetDesaturated(true)
             glow:SetPoint("TOPLEFT", -2.5, 2.5)
             glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
             glow:SetBlendMode("ADD")
@@ -96,6 +100,8 @@ function addon:TargetFocus(root)
             self.update:Show()
         elseif self.auras[buffFrame] then
             self.auras[buffFrame] = nil
+        else
+            aura.isGlow = false
         end
     end
 end
