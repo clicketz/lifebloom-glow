@@ -3,7 +3,6 @@ local addonName, addon = ...
 ---------------------------
 -- Lua Upvalues
 ---------------------------
-local _G = _G
 local CopyTable = CopyTable
 local GetTime = GetTime
 local pairs = pairs

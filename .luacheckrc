@@ -21,4 +21,10 @@ globals = {
     "CreateFrame",
     "C_UnitAuras",
     "DevTools_Dump",
+    "SlashCmdList",
+    "InterfaceOptionsFrame_OpenToCategory",
+    "UnitClass",
+    "hooksecurefunc",
+    "TargetFrame",
+    "FocusFrame",
 }
