@@ -137,11 +137,11 @@ function addon:PLAYER_LOGIN()
     -- Update Frame (Main Loop)
     ---------------------------
     self.update = CreateFrame("Frame")
-    self.lastUpdate = 0
+    local lastUpdate = 0
     self.update:SetScript("OnUpdate", function(s, elapsed)
-        self.lastUpdate = self.lastUpdate + elapsed
-        if self.lastUpdate >= self.db.throttle then
-            self.lastUpdate = 0
+        lastUpdate = lastUpdate + elapsed
+        if lastUpdate >= self.db.throttle then
+            lastUpdate = 0
 
             if next(self.auras) == nil then
                 s:Hide()
