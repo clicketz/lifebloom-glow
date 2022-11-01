@@ -91,10 +91,6 @@ function addon:TargetFocus(root)
     end
 end
 
-function LBG_DumpDB()
-    DevTools_Dump(addon.db)
-end
-
 ---------------------------
 -- Initialize
 ---------------------------
@@ -108,8 +104,9 @@ function addon:PLAYER_LOGIN()
 
     SLASH_LBG1 = "/lbg"
     function SlashCmdList.LBG(msg)
-        if msg == "dump" then
-            LBG_DumpDB()
+        if msg == "help" then
+            addon:Print("Available commands:")
+            addon:Print("/lbg help - Show this help")
         else
             InterfaceOptionsFrame_OpenToCategory(addonName)
             InterfaceOptionsFrame_OpenToCategory(addonName)
