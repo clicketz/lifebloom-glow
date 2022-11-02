@@ -3,11 +3,15 @@ local addonName, addon = ...
 ---------------------------
 -- Lua Upvalues
 ---------------------------
-local CopyTable = CopyTable
-local GetTime = GetTime
 local pairs = pairs
 local unpack = unpack
 local next = next
+
+---------------------------
+-- WoW API Upvalues
+---------------------------
+local CopyTable = CopyTable
+local GetTime = GetTime
 
 ---------------------------
 -- Database Defaults
