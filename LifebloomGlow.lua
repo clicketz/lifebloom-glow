@@ -25,7 +25,7 @@ local defaults = {
 }
 
 ---------------------------
--- EventHandler
+-- Events
 ---------------------------
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
@@ -41,22 +41,29 @@ function addon:Print(msg)
 end
 
 ---------------------------
+-- Glow Frame Func
+---------------------------
+local function CreateGlowFrame(buffFrame)
+    -- Use this frame to ensure the glow is always on top of the buff frame
+    local glowFrame = CreateFrame("Frame", nil, buffFrame)
+    glowFrame:SetAllPoints()
+    glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
+
+    local glow = glowFrame:CreateTexture(nil, "OVERLAY")
+    glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
+    glow:SetDesaturated(true)
+    glow:SetPoint("TOPLEFT", -2.5, 2.5)
+    glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
+    glow:SetBlendMode("ADD")
+    buffFrame.glow = glow
+end
+
+---------------------------
 -- CompactUnitFrame Core
 ---------------------------
 function addon:CompactUnitFrame(buffFrame, aura)
     if not buffFrame.glow then
-        -- Use this frame to ensure the glow is always on top of the buff frame
-        local glowFrame = CreateFrame("Frame", nil, buffFrame)
-        glowFrame:SetAllPoints()
-        glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
-
-        local glow = glowFrame:CreateTexture(nil, "OVERLAY")
-        glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
-        glow:SetDesaturated(true)
-        glow:SetPoint("TOPLEFT", -2.5, 2.5)
-        glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
-        glow:SetBlendMode("ADD")
-        buffFrame.glow = glow
+        CreateGlowFrame(buffFrame)
     end
 
     buffFrame.glow:Hide()
@@ -81,18 +88,7 @@ function addon:TargetFocus(root)
         local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID)
 
         if not buffFrame.glow then
-            -- Use this frame to ensure the glow is always on top of the buff frame
-            local glowFrame = CreateFrame("Frame", nil, buffFrame)
-            glowFrame:SetAllPoints()
-            glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
-
-            local glow = glowFrame:CreateTexture(nil, "OVERLAY")
-            glow:SetTexture([[Interface\TargetingFrame\UI-TargetingFrame-Stealable]])
-            glow:SetDesaturated(true)
-            glow:SetPoint("TOPLEFT", -2.5, 2.5)
-            glow:SetPoint("BOTTOMRIGHT", 2.5, -2.5)
-            glow:SetBlendMode("ADD")
-            buffFrame.glow = glow
+            CreateGlowFrame(buffFrame)
         end
 
         buffFrame.glow:Hide()
@@ -171,9 +167,7 @@ function addon:PLAYER_LOGIN()
                 if aura.expirationTime < GetTime() then
                     buffFrame.glow:Hide()
                     self.auras[buffFrame] = nil
-                    if self.instances[aura.auraInstanceID] then
-                        self.instances[aura.auraInstanceID] = nil
-                    end
+                    self.instances[aura.auraInstanceID] = nil
                 elseif self.instances[aura.auraInstanceID] then
                     local timeRemaining = (aura.expirationTime - GetTime()) / aura.timeMod
                     local refreshTime = aura.duration * 0.3
