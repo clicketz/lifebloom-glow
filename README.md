@@ -14,6 +14,13 @@ Because of this, it is recommended to always refresh lifebloom in this important
 
 This addon was meant to eliminate the guesswork involved with knowing when to refresh Lifebloom by putting a glow border (the same border that is used for dispellable/stealable buffs) around lifebloom when it is in the correct pandemic window.
 
+&nbsp;
+## **Supports Soul of the Forest**
+
+![sotf](https://i.imgur.com/KWy3BBI.png "sotf")
+
+Any hot empowered by soul of the forest will also get its own glow. All glows/colors are customizable in options.
+
 
 **Notes**
 
