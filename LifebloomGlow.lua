@@ -113,6 +113,15 @@ local function CreateGlowFrame(buffFrame)
 end
 
 ---------------------------
+-- SotF Glow Func
+---------------------------
+local function ShowSotFGlow(buffFrame, spellId, aura)
+    buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
+    buffFrame.glow:Show()
+    addon.sotfInfo.instances[spellId].aura = aura
+end
+
+---------------------------
 -- SotF Decider
 ---------------------------
 local function glowIfSotf(aura, buffFrame)
@@ -129,15 +138,23 @@ local function glowIfSotf(aura, buffFrame)
         spell.time = aura.expirationTime - aura.duration
     end
 
-    if spell then
-        local aura_time = modf(aura.expirationTime - aura.duration)
-        local saved_time = modf(spell.time)
+    if spell
+    and (spell.aura == nil
+        or spell.aura.auraInstanceID == aura.auraInstanceID
+        or spell.aura.expirationTime == aura.expirationTime) then
 
-        if aura_time == saved_time then
-            if addon.db.sotf then
-                buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
-                buffFrame.glow:Show()
+        if spell.aura == nil then
+            local aura_time = modf(aura.expirationTime - aura.duration)
+            local saved_time = modf(spell.time)
+
+            if aura_time == saved_time then
+                ShowSotFGlow(buffFrame, spellId, aura)
             end
+        elseif spell.aura.expirationTime == aura.expirationTime then
+            ShowSotFGlow(buffFrame, spellId, aura)
+        elseif modf(spell.aura.expirationTime + 1) == modf(aura.expirationTime) then
+            -- Workaround for Nurturing Dormancy talent
+            ShowSotFGlow(buffFrame, spellId, aura)
         else
             sotf.instances[spellId] = nil
         end
@@ -227,7 +244,6 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
         end
     elseif event == "SPELL_AURA_REFRESH" and spellId and sotf_spells[spellId] and self.sotf_up then
         sotf.instances[spellId] = {
-            spellId = spellId,
             time = GetTime(),
         }
     elseif event == "SPELL_AURA_REMOVED" and spellId == 114108 then
@@ -332,6 +348,7 @@ function addon:PLAYER_LOGIN()
 
             if next(self.auras) == nil then
                 s:Hide()
+                return
             end
 
             for buffFrame, aura in pairs(self.auras) do
