@@ -15,10 +15,18 @@ function addon:Options()
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText(addonName)
+    title:SetText("|cFF50C878L|rifebloom|cFF50C878G|rlow")
+
+    local author = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    author:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
+    author:SetFormattedText("|cFF50C878Author|r: %s", GetAddOnMetadata(addonName, "Author"))
+
+    local version = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    version:SetPoint("TOPLEFT", author, "BOTTOMLEFT", 0, -8)
+    version:SetFormattedText("|cFF50C878Version|r: %s", GetAddOnMetadata(addonName, "Version"))
 
     local glowColor = CreateFrame("Button", nil, panel, "BackdropTemplate")
-    glowColor:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -50)
+    glowColor:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -50)
     glowColor:SetSize(20, 20)
     glowColor:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
