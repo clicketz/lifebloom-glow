@@ -129,7 +129,7 @@ local function glowIfSotf(aura, buffFrame)
         spell.time = aura.expirationTime - aura.duration
     end
 
-    if spell and spell.spellId == spellId then
+    if spell then
         local aura_time = modf(aura.expirationTime - aura.duration)
         local saved_time = modf(spell.time)
 
@@ -152,7 +152,6 @@ local function glowIfLB(aura, buffFrame)
         addon.lbInstances[aura.auraInstanceID] = true
         addon.auras[buffFrame] = aura
         addon.lbUpdate:Show()
-        return
     elseif addon.auras[buffFrame] then
         addon.auras[buffFrame] = nil
     end
@@ -223,7 +222,6 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
             self.sotf_up = true
         elseif self.sotf_up and spellId then
             sotf.instances[spellId] = {
-                spellId = spellId,
                 time = GetTime(),
             }
         end
@@ -278,7 +276,7 @@ function addon:PLAYER_LOGIN()
     self.lbInstances = {}
     self.playerGUID = UnitGUID("player")
 
-    addon:Options()
+    self:Options()
 
     ---------------------------
     -- Slash Handler
