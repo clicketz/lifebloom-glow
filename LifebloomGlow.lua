@@ -6,32 +6,86 @@ local addonName, addon = ...
 local pairs = pairs
 local unpack = unpack
 local next = next
+local modf = math.modf
+local select = select
 
 ---------------------------
 -- WoW API Upvalues
 ---------------------------
 local CopyTable = CopyTable
 local GetTime = GetTime
+local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+local after = C_Timer.After
+local UnitIsFriend = UnitIsFriend
+local UnitClass = UnitClass
 
 ---------------------------
 -- Database Defaults
 ---------------------------
 local defaults = {
     throttle = 0.01,
-    glow = true,
-    glowColor = { 0, 1, 0, 1 },
+    lb = true,
+    lbColor = { 0, 1, 0, 1 },
     sotf = true,
-    sotfColor = { 1, 0, 0, 1 },
+    sotfColor = { 0.66, 0, 1, 1 },
 }
 
 ---------------------------
--- Events
+-- Spells Affected by SoTF
+---------------------------
+local sotf_spells = {
+    [774] = true, -- Rejuv
+    [155777] = true, -- Germination
+    [8936] = true, -- Regrowth
+    [48438] = true, -- Wild Growth
+}
+
+----------------------------------------
+-- Spells Affected by Invigorate & SotF
+----------------------------------------
+local invigorate_spells = {
+    [774] = true, -- Rejuv
+    [155777] = true, -- Germination
+}
+
+--[[-----------------------------------
+    Casting Overgrowth with SotF up
+    causes only rejuv or germ to be
+    empowered, so we need to block
+    these spells from being checked
+-------------------------------------]]
+local overgrowth_blocked = {
+    [8936] = true, -- Regrowth
+    [48438] = true, -- Wild Growth
+}
+
+---------------------------
+-- Lifebloom SpellIds
+---------------------------
+local lifeblooms = {
+    [33763] = true, -- Normal
+    [188550] = true, -- Undergrowth
+}
+
+---------------------------
+-- Event Handling
 ---------------------------
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     addon[event](addon, ...)
 end)
+
+---------------------------
+-- Enabling SotF Checking
+---------------------------
+function addon:EnableSotF(enable)
+    if enable then
+        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    else
+        eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    end
+end
 
 ---------------------------
 -- Print Function
@@ -59,24 +113,69 @@ local function CreateGlowFrame(buffFrame)
 end
 
 ---------------------------
--- CompactUnitFrame Core
+-- SotF Decider
 ---------------------------
-function addon:CompactUnitFrame(buffFrame, aura)
+local function glowIfSotf(aura, buffFrame)
+    local spellId = aura.spellId
+    local sotf = addon.sotfInfo
+    local spell = sotf.instances[spellId]
+
+    if addon.overgrowth and overgrowth_blocked[spellId] then
+        sotf.instances[spellId] = nil
+        return
+    end
+
+    if spell and addon.invigorate and invigorate_spells[spellId] then
+        spell.time = aura.expirationTime - aura.duration
+    end
+
+    if spell and spell.spellId == spellId then
+        local aura_time = modf(aura.expirationTime - aura.duration)
+        local saved_time = modf(spell.time)
+
+        if aura_time == saved_time then
+            if addon.db.sotf then
+                buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
+                buffFrame.glow:Show()
+            end
+        else
+            sotf.instances[spellId] = nil
+        end
+    end
+end
+
+---------------------------
+-- LB Decider
+---------------------------
+local function glowIfLB(aura, buffFrame)
+    if lifeblooms[aura.spellId] then
+        addon.lbInstances[aura.auraInstanceID] = true
+        addon.auras[buffFrame] = aura
+        addon.lbUpdate:Show()
+        return
+    elseif addon.auras[buffFrame] then
+        addon.auras[buffFrame] = nil
+    end
+end
+
+-------------------------------------
+-- Decide if we care about the aura
+-------------------------------------
+function addon:HandleAura(buffFrame, aura)
     if not buffFrame.glow then
         CreateGlowFrame(buffFrame)
     end
 
     buffFrame.glow:Hide()
 
-    if (aura.spellId == 33763 or aura.spellId == 188550) and aura.isFromPlayerOrPlayerPet then
-        aura.isGlow = true
-        self.instances[aura.auraInstanceID] = true
-        self.auras[buffFrame] = aura
-        self.update:Show()
-    elseif self.auras[buffFrame] then
-        self.auras[buffFrame] = nil
-    else
-        aura.isGlow = false
+    if not aura or not aura.isFromPlayerOrPlayerPet or aura.isHarmful then return end
+
+    if addon.db.sotf then
+        glowIfSotf(aura, buffFrame)
+    end
+
+    if addon.db.lb then
+        glowIfLB(aura, buffFrame)
     end
 end
 
@@ -84,26 +183,76 @@ end
 -- Target/Focus Frame Core
 ---------------------------
 function addon:TargetFocus(root)
+    -- No need to waste CPU on enemies except mages for spell stealing our hots
+    if not UnitIsFriend("player", root.unit) and not select(2, UnitClass(root.unit) == "MAGE") then return end
+
     for buffFrame in root.auraPools:EnumerateActive() do
-        local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID)
-
-        if not buffFrame.glow then
-            CreateGlowFrame(buffFrame)
-        end
-
-        buffFrame.glow:Hide()
-
-        if (aura.spellId == 33763 or aura.spellId == 188550) and aura.isFromPlayerOrPlayerPet then
-            aura.isGlow = true
-            self.instances[aura.auraInstanceID] = true
-            self.auras[buffFrame] = aura
-            self.update:Show()
-        elseif self.auras[buffFrame] then
-            self.auras[buffFrame] = nil
-        else
-            aura.isGlow = false
-        end
+        self:HandleAura(buffFrame, C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID))
     end
+end
+
+local function disableOvergrowth()
+    addon.overgrowth = false
+end
+
+local function disableInvigorate()
+    addon.invigorate = false
+end
+
+---------------------------
+-- SotF Combat Log Checking
+---------------------------
+function addon:COMBAT_LOG_EVENT_UNFILTERED()
+    local _, event, _, sourceGUID, _, _, _, _, _, _, _, spellId = CombatLogGetCurrentEventInfo()
+    local sotf = self.sotfInfo
+
+    if sourceGUID ~= self.playerGUID then
+        return
+    end
+
+    if event == "SPELL_CAST_SUCCESS" and (spellId == 203651 or spellId == 392160) then
+        if spellId == 392160 then
+            self.invigorate = true
+            after(0.2, disableInvigorate)
+        elseif spellId == 203651 then
+            self.overgrowth = true
+            after(0, disableOvergrowth)
+        end
+    elseif event == "SPELL_AURA_APPLIED" and (spellId == 114108 or sotf_spells[spellId]) then
+        if spellId == 114108 then
+            self.sotf_up = true
+        elseif self.sotf_up and spellId then
+            sotf.instances[spellId] = {
+                spellId = spellId,
+                time = GetTime(),
+            }
+        end
+    elseif event == "SPELL_AURA_REFRESH" and spellId and sotf_spells[spellId] and self.sotf_up then
+        sotf.instances[spellId] = {
+            spellId = spellId,
+            time = GetTime(),
+        }
+    elseif event == "SPELL_AURA_REMOVED" and spellId == 114108 then
+        --[[
+            Wait until the next frame to disable sotf otherwise
+            the game sometimes sends the aura_removed event before
+            the aura_applied event due to batching
+        ]]
+        after(0, function()
+            self.sotf_up = false
+        end)
+    end
+end
+
+---------------------------
+-- Target / Focus Changing
+---------------------------
+function addon:PLAYER_TARGET_CHANGED()
+    self:TargetFocus(TargetFrame)
+end
+
+function addon:PLAYER_FOCUS_CHANGED()
+    self:TargetFocus(FocusFrame)
 end
 
 ---------------------------
@@ -111,12 +260,29 @@ end
 ---------------------------
 function addon:PLAYER_LOGIN()
     LifebloomGlowDB = LifebloomGlowDB or CopyTable(defaults)
+
+    ---------------------------
+    -- DB Validation
+    ---------------------------
+    for k in pairs(defaults) do
+        if LifebloomGlowDB[k] == nil then
+            LifebloomGlowDB = CopyTable(defaults)
+        end
+    end
+
     self.db = LifebloomGlowDB
     self.auras = {}
-    self.instances = {}
+    self.sotfInfo = {
+        instances = {},
+    }
+    self.lbInstances = {}
+    self.playerGUID = UnitGUID("player")
 
     addon:Options()
 
+    ---------------------------
+    -- Slash Handler
+    ---------------------------
     SLASH_LIFEBLOOMGLOW1 = "/lbg"
     function SlashCmdList.LIFEBLOOMGLOW(msg)
         if msg == "help" then
@@ -132,13 +298,15 @@ function addon:PLAYER_LOGIN()
     if (select(2, UnitClass("player")) ~= "DRUID") then
         self:Print("Disabled when not playing a Druid.")
         return
-    else
-        self:Print("Loaded. Type |cFF50C878/lbg|r for options.")
     end
 
-    -- Do our hooks
+    self:EnableSotF(self.db.sotf)
+
+    ---------------------------
+    -- Hooks
+    ---------------------------
     hooksecurefunc("CompactUnitFrame_UtilSetBuff", function(s, ...)
-        self:CompactUnitFrame(s, ...)
+        self:HandleAura(s, ...)
     end)
 
     hooksecurefunc(TargetFrame, "UpdateAuras", function(s)
@@ -149,12 +317,17 @@ function addon:PLAYER_LOGIN()
         self:TargetFocus(s)
     end)
 
-    ---------------------------
-    -- Update Frame (Main Loop)
-    ---------------------------
-    self.update = CreateFrame("Frame")
+    ----------------------------------------
+    -- Lifebloom Update Frame (Main Loop)
+    ----------------------------------------
+    self.lbUpdate = CreateFrame("Frame")
     local lastUpdate = 0
-    self.update:SetScript("OnUpdate", function(s, elapsed)
+    self.lbUpdate:SetScript("OnUpdate", function(s, elapsed)
+        if not self.db.lb then
+            s:Hide()
+            return
+        end
+
         lastUpdate = lastUpdate + elapsed
         if lastUpdate >= self.db.throttle then
             lastUpdate = 0
@@ -167,21 +340,14 @@ function addon:PLAYER_LOGIN()
                 if aura.expirationTime < GetTime() then
                     buffFrame.glow:Hide()
                     self.auras[buffFrame] = nil
-                    self.instances[aura.auraInstanceID] = nil
-                elseif self.instances[aura.auraInstanceID] then
+                    self.lbInstances[aura.auraInstanceID] = nil
+                elseif self.lbInstances[aura.auraInstanceID] then
                     local timeRemaining = (aura.expirationTime - GetTime()) / aura.timeMod
                     local refreshTime = aura.duration * 0.3
 
                     if (timeRemaining <= refreshTime) then
-                        if self.db.glow and aura.isGlow then
-                            buffFrame.glow:SetVertexColor(unpack(self.db.glowColor))
-                        end
-                        if self.db.sotf and aura.isSotf then
-                            buffFrame.glow:SetVertexColor(unpack(self.db.sotfColor))
-                        end
-                        if aura.isGlow and self.db.glow or aura.isSotf and self.db.sotf then
-                            buffFrame.glow:Show()
-                        end
+                        buffFrame.glow:SetVertexColor(unpack(self.db.lbColor))
+                        buffFrame.glow:Show()
                     else
                         buffFrame.glow:Hide()
                     end
@@ -192,5 +358,7 @@ function addon:PLAYER_LOGIN()
             end
         end
     end)
-    self.update:Hide()
+    self.lbUpdate:Hide()
+
+    self:Print("Loaded. Type |cFF50C878/lbg|r for options.")
 end
