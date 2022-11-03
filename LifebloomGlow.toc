@@ -5,6 +5,7 @@
 ## Version: @project-version@
 ## X-Curse-Project-ID: 296075
 ## X-WoWI-ID: 24684
+## X-Wago-ID: Xb6XWBNp
 ## SavedVariables: LifebloomGlowDB
 
 Options.lua
