@@ -14,12 +14,13 @@ globals = {
 
     -- Lua
     "_G",
-    "CopyTable",
-    "GetTime",
 
     -- WoW
     "CreateFrame",
     "C_UnitAuras",
+    "C_Timer",
+    "CopyTable",
+    "GetTime",
     "DevTools_Dump",
     "SlashCmdList",
     "InterfaceOptionsFrame_OpenToCategory",
@@ -30,4 +31,9 @@ globals = {
     "TargetFrame",
     "FocusFrame",
     "ColorPickerFrame",
+    "GameTooltip",
+    "ShowUIPanel",
+    "UnitGUID",
+    "UnitIsFriend",
+    "CombatLogGetCurrentEventInfo",
 }
