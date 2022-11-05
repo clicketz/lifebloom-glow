@@ -8,9 +8,16 @@ ignore = {
     "11./SLASH_.*", -- slash handler
     "212", -- unused argument
 }
+read_globals = {
+    -- WoW
+    "LARGE_NUMBER_SEPERATOR",
+}
 globals = {
-    --Addon Specific
+    -- BuffOverlay
     "LifebloomGlowDB",
+
+    -- Other Addons
+    "GetAddOnMetadata",
 
     -- Lua
     "_G",
@@ -19,8 +26,12 @@ globals = {
     "CreateFrame",
     "C_UnitAuras",
     "C_Timer",
+    "C_Traits",
+    "C_ClassTalents",
+    "Spell",
     "CopyTable",
     "GetTime",
+    "GetMasteryEffect",
     "DevTools_Dump",
     "SlashCmdList",
     "InterfaceOptionsFrame_OpenToCategory",
@@ -36,4 +47,7 @@ globals = {
     "UnitGUID",
     "UnitIsFriend",
     "CombatLogGetCurrentEventInfo",
+    "WorldFrame",
+    "wipe",
+    "AuraUtil",
 }

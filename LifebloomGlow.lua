@@ -3,21 +3,24 @@ local addonName, addon = ...
 ---------------------------
 -- Lua Upvalues
 ---------------------------
-local pairs = pairs
-local unpack = unpack
-local next = next
-local modf = math.modf
-local select = select
+local pairs    = pairs
+local unpack   = unpack
+local next     = next
+local select   = select
+local tinsert  = table.insert
+local tonumber = tonumber
+local min      = math.min
 
 ---------------------------
 -- WoW API Upvalues
 ---------------------------
 local CopyTable = CopyTable
 local GetTime = GetTime
-local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
-local after = C_Timer.After
 local UnitIsFriend = UnitIsFriend
 local UnitClass = UnitClass
+local after = C_Timer.After
+local wipe = wipe
+local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 
 ---------------------------
 -- Database Defaults
@@ -30,42 +33,15 @@ local defaults = {
     sotfColor = { 0.66, 0, 1, 1 },
 }
 
----------------------------
+--------------------------------
 -- Spells Affected by SoTF
----------------------------
+-- [spellId] = sotf multiplier
+--------------------------------
 local sotf_spells = {
-    [774] = true, -- Rejuv
-    [155777] = true, -- Germination
-    [8936] = true, -- Regrowth
-    [48438] = true, -- Wild Growth
-}
-
-----------------------------------------
--- Spells Affected by Invigorate & SotF
-----------------------------------------
-local invigorate_spells = {
-    [774] = true, -- Rejuv
-    [155777] = true, -- Germination
-}
-
----------------------------------------------
--- Spells Affected by Power of the Archdruid
----------------------------------------------
-local archdruid_spells = {
-    [774] = true, -- Rejuv
-    [155777] = true, -- Germination
-    [8936] = true, -- Regrowth
-}
-
---[[-----------------------------------
-    Casting Overgrowth with SotF up
-    causes only rejuv or germ to be
-    empowered, so we need to block
-    these spells from being checked
--------------------------------------]]
-local overgrowth_blocked = {
-    [8936] = true, -- Regrowth
-    [48438] = true, -- Wild Growth
+    [774] = 2.4, -- Rejuv
+    [155777] = 2.4, -- Germination
+    [8936] = 2.35, -- Regrowth
+    [48438] = 1.45, -- Wild Growth
 }
 
 ---------------------------
@@ -76,24 +52,22 @@ local lifeblooms = {
     [188550] = true, -- Undergrowth
 }
 
-------------------------------
--- Spell Cast Success Spells
-------------------------------
-local cast_success_spells = {
-    [203651] = true, -- Overgrowth
-    [392160] = true, -- Invigorate
-    [18562] = true, -- Swiftmend
-    [197721] = true, -- Flourish
-}
-
---[[------------------------------------------------------------------------
-    Talent Info Ids
-
-    [traitNodeId] = { name = "name used check", entryID = traitEntryId}
---------------------------------------------------------------------------]]
-local talentIds = {
-    [82079] = { name = "verdant", entryID = 103137 }, -- Verdant Infusion
-    [82068] = { name = "luxuriant", entryID = 103124 }, -- Luxuriant Soil
+---------------------------------------
+-- All Druid hots that affect mastery
+---------------------------------------
+local druidHots = {
+    [774] = true, -- Rejuv
+    [155777] = true, -- Germination
+    [8936] = true, -- Regrowth
+    [48438] = true, -- Wild Growth
+    [33763] = true, -- Lifebloom
+    [188550] = true, -- Undergrowth
+    [740] = true, -- Tranquility
+    [102352] = true, -- Cenarion Ward Hot
+    [200389] = true, -- Cultivation
+    [22842] = true, -- Frenzied Regen
+    [383193] = true, -- Grove Tending
+    [207386] = true, -- Spring Blossoms
 }
 
 ---------------------------
@@ -106,25 +80,61 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
 end)
 
 ---------------------------
--- Enabling SotF Checking
----------------------------
-function addon:EnableSotF(enable)
-    if enable then
-        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    else
-        eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    end
-end
-
----------------------------
 -- Print Functions
 ---------------------------
 function addon:Print(msg)
     print("|cFF50C878L|rifebloom|cFF50C878G|rlow: " .. msg)
 end
 
-function addon:Debug(...)
-    print("|cFF50C878DEBUG|r:", tostringall(...))
+---------------------------------
+-- Hidden Tooltip
+-- Credit: WeakAuras
+-- For processing tooltip info
+---------------------------------
+function addon:GetHiddenTooltip()
+    if not self.hiddenTooltip then
+        self.hiddenTooltip = CreateFrame("GameTooltip", "LifebloomGlowTooltip", nil, "GameTooltipTemplate")
+        self.hiddenTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+        self.hiddenTooltip:AddFontStrings(
+            self.hiddenTooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
+            self.hiddenTooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
+        )
+    end
+
+    return self.hiddenTooltip
+end
+
+----------------------------------------
+-- Get Tooltip Info
+-- Credit: WeakAuras
+-- Replace with C_TooltipInfo in 10.0.2
+----------------------------------------
+function addon:GetTooltipInfo(unit, auraInstanceID)
+    local tooltip = addon:GetHiddenTooltip()
+    tooltip:ClearLines()
+    tooltip:SetUnitBuffByAuraInstanceID(unit, auraInstanceID)
+
+    local tooltipTextLine = select(5, tooltip:GetRegions())
+    local text = tooltipTextLine and tooltipTextLine:GetObjectType() == "FontString" and tooltipTextLine:GetText() or ""
+    local tooltipSize = {}
+
+    if text then
+        for t in text:gmatch("(%d[%d%.,]*)") do
+            if (LARGE_NUMBER_SEPERATOR == ",") then
+                t = t:gsub(",", "");
+            else
+                t = t:gsub("%.", "");
+                t = t:gsub(",", ".");
+            end
+            tinsert(tooltipSize, tonumber(t));
+        end
+    end
+
+    if #tooltipSize then
+        return text, unpack(tooltipSize)
+    else
+        return text, 0
+    end
 end
 
 ---------------------------
@@ -146,82 +156,87 @@ local function CreateGlowFrame(buffFrame)
 end
 
 ---------------------------
+-- SotF Tables
+---------------------------
+local sotfGlows = {}
+local amts = {}
+
+---------------------------
 -- SotF Glow Func
 ---------------------------
-local function ShowSotFGlow(buffFrame, spellId, aura, flourish)
+local function glowSotf(buffFrame, aura, amtNeeded)
     buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
     buffFrame.glow:Show()
-    addon.sotfInfo.spellIds[spellId].instances[aura.auraInstanceID] = aura
-    addon.sotfInfo.spellIds[spellId].instances[aura.auraInstanceID].flourish = flourish
+
+    sotfGlows[aura.auraInstanceID] = sotfGlows[aura.auraInstanceID] or {}
+    sotfGlows[aura.auraInstanceID].state = amtNeeded
+    sotfGlows[aura.auraInstanceID].aura = aura
 end
 
 ---------------------------
 -- SotF Decider
 ---------------------------
 local function glowIfSotf(aura, buffFrame)
-    if not sotf_spells[aura.spellId] then return end
+    local mult = sotf_spells[aura.spellId]
+    if not mult then return end
+    local sId = aura.spellId
+    local amtNeeded
+    local unit = buffFrame:GetParent().unit
+    local prevGlow = sotfGlows[aura.auraInstanceID]
+    local _, curTick, rate = addon:GetTooltipInfo(unit, aura.auraInstanceID)
+    local cachedTick = addon.baseTickCache[sId]
+    -- Rejuv (and germ) apply its own mastery to itself, but the tooltip doesn't reflect it.
+    -- This is unique to these two spells, so we need to account for it.
+    curTick = curTick / rate * ((sId == 774 or sId == 155777) and (1 + addon.mastery) or 1)
 
-    if addon.lux then
-        after(0.01, function()
-            glowIfSotf(aura, buffFrame)
-        end)
+    -- Workaround for Overgrowth. It always applies SotF to rejuv/germ and also at the base tick rate.
+    if addon.overgrowth and (sId == 774 or sId == 155777) then
+        if curTick > cachedTick * mult then
+            glowSotf(buffFrame, aura, curTick)
+        end
         return
     end
 
-    local spellId = aura.spellId
-    local sotf = addon.sotfInfo
-    local spell = sotf.spellIds[spellId].instances[aura.auraInstanceID]
-    local time = sotf.spellIds[spellId].time
+    if prevGlow then
+        amtNeeded = prevGlow.state
+    else
+        local hots = 0
+        AuraUtil.ForEachAura(unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
+            local incr = 1
+            if spellId == 33763 then
+                incr = addon.harmBlooming
+            end
+            if druidHots[spellId] then
+                hots = hots + incr
+            end
+        end)
+        hots = (hots - 1 > 0) and hots - 1 or 0
 
-    if spellId == 48438 then
-        addon:Debug("Wild Growth", aura.auraInstanceID, aura.expirationTime, aura.duration, time)
+        local masteryBonus = 1 + (addon.mastery * hots)
+        amtNeeded = cachedTick * mult * masteryBonus
     end
 
-    if not spell and (time ~= 0 or spellId == 48438) then
-        local aura_time = modf(aura.expirationTime - aura.duration)
-        local saved_time = modf(time)
+    if not cachedTick then
+        addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
+    elseif not prevGlow and (sId == 48438) then
+        -- Fix for Wild Growth having different tick values for different targets
+        -- but Blizzard still uses the same auraInstanceID for all of them.
+        tinsert(amts, amtNeeded)
+        after(0.05, function()
+            if next(amts) ~= nil then
+                amtNeeded = min(unpack(amts))
 
-        addon:Debug("Aura Time: " .. aura_time, "Saved Time: " .. saved_time)
+                if (curTick > amtNeeded) then
+                    glowSotf(buffFrame, aura, amtNeeded)
+                end
 
-        if addon.potad and archdruid_spells[spellId] then
-            ShowSotFGlow(buffFrame, spellId, aura)
-            addon.potad = false
-        elseif addon.overgrowth and overgrowth_blocked[spellId] then
-            sotf.spellIds[spellId].instances[aura.auraInstanceID] = nil
-        elseif aura_time == saved_time then
-            addon:Debug("Else Expiration Match", aura.expirationTime)
-            ShowSotFGlow(buffFrame, spellId, aura)
-        end
-
-        after(0, function()
-            sotf.spellIds[spellId].time = 0
+                wipe(amts)
+            else
+                glowIfSotf(aura, buffFrame)
+            end
         end)
-    elseif spell then
-        -- Flourish needs to be handled differently because durations get screwy after it is applied.
-        if spell.flourish and modf(spell.expirationTime) == modf(aura.expirationTime) then
-            addon:Debug("Expiration Time Match (Flourish)", spell.expirationTime, aura.expirationTime)
-            ShowSotFGlow(buffFrame, spellId, aura, true)
-        elseif spell.expirationTime == aura.expirationTime then
-            addon:Debug("Expiration Time Match", spell.expirationTime, aura.expirationTime)
-            ShowSotFGlow(buffFrame, spellId, aura)
-        elseif addon.invigorate and invigorate_spells[spellId] then
-            addon:Debug("Invigorate")
-            ShowSotFGlow(buffFrame, spellId, aura)
-        elseif addon.flourish then
-            addon:Debug("Flourish")
-            ShowSotFGlow(buffFrame, spellId, aura, true)
-        elseif addon.verdant then
-            addon:Debug("Verdant")
-            ShowSotFGlow(buffFrame, spellId, aura)
-        elseif (modf(spell.expirationTime) + 1) == modf(aura.expirationTime) then
-            addon:Debug("Nurturing Dormancy")
-            -- Workaround for Nurturing Dormancy
-            ShowSotFGlow(buffFrame, spellId, aura)
-        else
-            addon:Debug("Expiration Time Mismatch", spell.expirationTime, aura.expirationTime)
-            -- This aura is not the one we want to show the glow for
-            sotf.spellIds[spellId].instances[aura.auraInstanceID] = nil
-        end
+    elseif (curTick >= amtNeeded) then
+        glowSotf(buffFrame, aura, amtNeeded)
     end
 end
 
@@ -231,10 +246,10 @@ end
 local function glowIfLB(aura, buffFrame)
     if lifeblooms[aura.spellId] then
         addon.lbInstances[aura.auraInstanceID] = true
-        addon.auras[buffFrame] = aura
+        addon.lbAuras[buffFrame] = aura
         addon.lbUpdate:Show()
-    elseif addon.auras[buffFrame] then
-        addon.auras[buffFrame] = nil
+    elseif addon.lbAuras[buffFrame] then
+        addon.lbAuras[buffFrame] = nil
     end
 end
 
@@ -248,18 +263,15 @@ function addon:HandleAura(buffFrame, aura)
 
     buffFrame.glow:Hide()
 
-    if not aura or not aura.isFromPlayerOrPlayerPet or aura.isHarmful then return end
+    if not aura
+    or not aura.isFromPlayerOrPlayerPet
+    or aura.isHarmful then return end
 
     if self.db.sotf then
-        local sotf = self.sotfInfo.spellIds
-        local time = GetTime()
-        for _, info in pairs(sotf) do
-            if next(info.instances) ~= nil then
-                for instanceID, a in pairs(info.instances) do
-                    if a.expirationTime < time then
-                        info.instances[instanceID] = nil
-                    end
-                end
+        for k, v in pairs(sotfGlows) do
+            local a = v.aura
+            if a and (a.expirationTime < GetTime()) then
+                sotfGlows[k] = nil
             end
         end
         glowIfSotf(aura, buffFrame)
@@ -282,123 +294,83 @@ function addon:TargetFocus(root)
     end
 end
 
-local function addInstance(spellId, time)
-    local sotf = addon.sotfInfo
-    if spellId == 774 and addon.activeTalents.luxuriant then
-        addon.lux = true
-        after(0.01, function()
-            if not addon.sotf_up then
-                addon:Debug("Adding...FORMER")
-                sotf.spellIds[spellId].time = time
-            end
-            addon.lux = false
-        end)
+---------------------------
+-- Talent Updates
+---------------------------
+function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
+    self.mastery = GetMasteryEffect() / 100
+    wipe(self.baseTickCache)
+
+    local hbNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82065)
+    local hbRank = hbNode and hbNode.activeRank or 0
+
+    self.harmBlooming = hbRank + 1
+
+    -- Check for Overgrowth
+    local ogNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82061)
+    self.overgrowthEnabled = ogNode and ogNode.activeRank > 0
+
+    -- We need to use CLEU for overgrowth
+    if self.overgrowthEnabled then
+        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     else
-        addon:Debug("Adding...")
-        sotf.spellIds[spellId].time = time
+        eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    end
+
+    for spellId in pairs(sotf_spells) do
+        local spell = Spell:CreateFromSpellID(spellId)
+
+        spell:ContinueOnSpellLoad(function()
+            local desc = spell:GetSpellDescription()
+
+            desc = desc:gsub(",", "")
+            local amount, dur = desc:match("(%d+) over (%d+) sec")
+
+            self.baseTickCache[spellId] = amount / dur
+        end)
     end
 end
 
---[[-------------------------------------------------------
-    Localize these functions so C_Timer isn't creating new
-    anonymous functions every time it's called.
----------------------------------------------------------]]
-local function disableSotf()
-    addon.sotf_up = false
+function addon:ACTIVE_PLAYER_SPECIALIZATION_CHANGED()
+    self:TRAIT_TREE_CURRENCY_INFO_UPDATED()
 end
 
+---------------------------
+-- CLEU
+---------------------------
 local function disableOvergrowth()
     addon.overgrowth = false
 end
 
-local function disableInvigorate()
-    addon.invigorate = false
-end
-
-local function disableVerdant()
-    addon.verdant = false
-end
-
-local function disableFlourish()
-    addon.flourish = false
-end
-
----------------------------
--- SotF Combat Log Checking
----------------------------
 function addon:COMBAT_LOG_EVENT_UNFILTERED()
+    if not self.db.sotf then
+        eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    end
+
     local _, event, _, sourceGUID, _, _, _, _, _, _, _, spellId = CombatLogGetCurrentEventInfo()
 
-    if sourceGUID ~= self.playerGUID then
-        return
-    end
+    if sourceGUID ~= self.playerGUID then return end
 
-    if event == "SPELL_CAST_SUCCESS" and cast_success_spells[spellId] then
-        if spellId == 392160 then
-            self.invigorate = true
-            after(0.1, disableInvigorate)
-        elseif spellId == 203651 then
-            self.overgrowth = true
-            after(0.1, disableOvergrowth)
-        elseif self.activeTalents.verdant and spellId == 18562 then
-            self.verdant = true
-            after(0.1, disableVerdant)
-        elseif spellId == 197721 then
-            self.flourish = true
-            after(0.1, disableFlourish)
-        end
-    elseif event == "SPELL_AURA_APPLIED" and (spellId == 114108 or spellId == 392303 or sotf_spells[spellId]) then
-        if spellId == 114108 then
-            self.sotf_up = true
-        elseif spellId == 392303 then
-            -- power of the arch druid
-            self.potad = true
-        elseif self.sotf_up and spellId then
-            addInstance(spellId, GetTime())
-        end
-    elseif event == "SPELL_AURA_REFRESH" and spellId and sotf_spells[spellId] and self.sotf_up then
-        addInstance(spellId, GetTime())
-    elseif event == "SPELL_AURA_REMOVED" and (spellId == 114108 or sotf_spells[spellId]) then
-        --[[
-            Wait until the next frame to disable sotf otherwise
-            the game sometimes sends the aura_removed event before
-            the aura_applied event due to batching
-        ]]
-        if spellId == 114108 then
-            after(0, disableSotf)
-        end
+    if event == "SPELL_CAST_SUCCESS" and spellId == 203651 then
+        self.overgrowth = true
+
+        after(0, disableOvergrowth)
     end
 end
 
 ---------------------------
--- Target / Focus Changing
+-- Toggle Sotf
 ---------------------------
-function addon:PLAYER_TARGET_CHANGED()
-    self:TargetFocus(TargetFrame)
-end
+function addon:EnableSotf(enable)
+    self.db.sotf = enable
 
-function addon:PLAYER_FOCUS_CHANGED()
-    self:TargetFocus(FocusFrame)
-end
-
----------------------------
--- Talent Update
----------------------------
-function addon:SPELLS_CHANGED()
-    wipe(self.activeTalents)
-
-    local configID = C_ClassTalents.GetActiveConfigID()
-    if configID then
-        for nodeID, info in pairs(talentIds) do
-            local nodeInfo = C_Traits.GetNodeInfo(configID, nodeID)
-            if nodeInfo.currentRank > 0 then
-                if info.entryID and info.entryID == nodeInfo.activeEntry.entryID then
-                    self.activeTalents[info.name] = true
-                elseif info.entryID == nil then
-                    self.activeTalents[info.name] = true
-                end
-            end
-        end
+    if enable then
+        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+        eventFrame:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED")
+        eventFrame:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+        self:TRAIT_TREE_CURRENCY_INFO_UPDATED()
+    else
+        eventFrame:UnregisterAllEvents()
     end
 end
 
@@ -418,22 +390,12 @@ function addon:PLAYER_LOGIN()
     end
 
     self.db = LifebloomGlowDB
-    self.auras = {}
-    self.sotfInfo = {
-        spellIds = {},
-    }
+    self.baseTickCache = {}
     self.lbInstances = {}
+    self.lbAuras = {}
     self.playerGUID = UnitGUID("player")
-    self.activeTalents = {}
 
     self:Options()
-
-    for spellId in pairs(sotf_spells) do
-        self.sotfInfo.spellIds[spellId] = {
-            instances = {},
-            time = 0,
-        }
-    end
 
     ---------------------------
     -- Slash Handler
@@ -455,8 +417,7 @@ function addon:PLAYER_LOGIN()
         return
     end
 
-    eventFrame:RegisterEvent("SPELLS_CHANGED")
-    self:EnableSotF(self.db.sotf)
+    self:EnableSotf(self.db.sotf)
 
     ---------------------------
     -- Hooks
@@ -488,15 +449,15 @@ function addon:PLAYER_LOGIN()
         if lastUpdate >= self.db.throttle then
             lastUpdate = 0
 
-            if next(self.auras) == nil then
+            if next(self.lbAuras) == nil then
                 s:Hide()
                 return
             end
 
-            for buffFrame, aura in pairs(self.auras) do
+            for buffFrame, aura in pairs(self.lbAuras) do
                 if aura.expirationTime < GetTime() then
                     buffFrame.glow:Hide()
-                    self.auras[buffFrame] = nil
+                    self.lbAuras[buffFrame] = nil
                     self.lbInstances[aura.auraInstanceID] = nil
                 elseif self.lbInstances[aura.auraInstanceID] then
                     local timeRemaining = (aura.expirationTime - GetTime()) / aura.timeMod
@@ -510,7 +471,7 @@ function addon:PLAYER_LOGIN()
                     end
                 else
                     buffFrame.glow:Hide()
-                    self.auras[buffFrame] = nil
+                    self.lbAuras[buffFrame] = nil
                 end
             end
         end
