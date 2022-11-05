@@ -123,10 +123,8 @@ function addon:Print(msg)
     print("|cFF50C878L|rifebloom|cFF50C878G|rlow: " .. msg)
 end
 
-function addon:Debug(msg)
-    if addon.db.debug then
-        print("|cFF50C878DEBUG|r: " .. msg)
-    end
+function addon:Debug(...)
+    print("|cFF50C878DEBUG|r:", tostringall(...))
 end
 
 ---------------------------
@@ -150,64 +148,80 @@ end
 ---------------------------
 -- SotF Glow Func
 ---------------------------
-local function ShowSotFGlow(buffFrame, spellId, aura)
+local function ShowSotFGlow(buffFrame, spellId, aura, flourish)
     buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
     buffFrame.glow:Show()
-    addon.sotfInfo.instances[spellId].aura = aura
+    addon.sotfInfo.spellIds[spellId].instances[aura.auraInstanceID] = aura
+    addon.sotfInfo.spellIds[spellId].instances[aura.auraInstanceID].flourish = flourish
 end
 
 ---------------------------
 -- SotF Decider
 ---------------------------
 local function glowIfSotf(aura, buffFrame)
-    local spellId = aura.spellId
-    local sotf = addon.sotfInfo
-    local spell = sotf.instances[spellId]
-
-    if spell then
-        -- First time an aura is seen
-        if spell.aura == nil then
-
-            local aura_time = modf(aura.expirationTime - aura.duration)
-            local saved_time = modf(spell.time)
-
-            if addon.potad and archdruid_spells[spellId] then
-                ShowSotFGlow(buffFrame, spellId, aura)
-                addon.potad = false
-            elseif addon.overgrowth and overgrowth_blocked[spellId] then
-                sotf.instances[spellId] = nil
-                return
-            elseif aura_time == saved_time then
-                ShowSotFGlow(buffFrame, spellId, aura)
-            end
-        elseif spellId == 48438 or (spell.aura.auraInstanceID == aura.auraInstanceID) then
-            if addon.invigorate and invigorate_spells[spellId] then
-                spell.aura = aura
-            elseif addon.flourish then
-                spell.aura = aura
-            elseif addon.verdant then
-                spell.aura = aura
-                ShowSotFGlow(buffFrame, spellId, aura)
-                return
-            elseif (modf(spell.aura.expirationTime) + 1) == modf(aura.expirationTime) then
-                -- Workaround for Nurturing Dormancy
-                spell.aura = aura
-            end
-
-            if spell.aura.expirationTime == aura.expirationTime then
-                ShowSotFGlow(buffFrame, spellId, aura)
-            elseif modf(spell.aura.expirationTime) == modf(aura.expirationTime) then
-                -- this should be rare, but sometimes the expiration is off by a thousandth of a second or so
-                -- so we'll just double check here, as that's probably still the right aura.
-                ShowSotFGlow(buffFrame, spellId, aura)
-            end
-        end
-    end
+    if not sotf_spells[aura.spellId] then return end
 
     if addon.lux then
         after(0.01, function()
             glowIfSotf(aura, buffFrame)
         end)
+        return
+    end
+
+    local spellId = aura.spellId
+    local sotf = addon.sotfInfo
+    local spell = sotf.spellIds[spellId].instances[aura.auraInstanceID]
+    local time = sotf.spellIds[spellId].time
+
+    if spellId == 48438 then
+        addon:Debug("Wild Growth", aura.auraInstanceID, aura.expirationTime, aura.duration, time)
+    end
+
+    if not spell and (time ~= 0 or spellId == 48438) then
+        local aura_time = modf(aura.expirationTime - aura.duration)
+        local saved_time = modf(time)
+
+        addon:Debug("Aura Time: " .. aura_time, "Saved Time: " .. saved_time)
+
+        if addon.potad and archdruid_spells[spellId] then
+            ShowSotFGlow(buffFrame, spellId, aura)
+            addon.potad = false
+        elseif addon.overgrowth and overgrowth_blocked[spellId] then
+            sotf.spellIds[spellId].instances[aura.auraInstanceID] = nil
+        elseif aura_time == saved_time then
+            addon:Debug("Else Expiration Match", aura.expirationTime)
+            ShowSotFGlow(buffFrame, spellId, aura)
+        end
+
+        after(0, function()
+            sotf.spellIds[spellId].time = 0
+        end)
+    elseif spell then
+        -- Flourish needs to be handled differently because durations get screwy after it is applied.
+        if spell.flourish and modf(spell.expirationTime) == modf(aura.expirationTime) then
+            addon:Debug("Expiration Time Match (Flourish)", spell.expirationTime, aura.expirationTime)
+            ShowSotFGlow(buffFrame, spellId, aura, true)
+        elseif spell.expirationTime == aura.expirationTime then
+            addon:Debug("Expiration Time Match", spell.expirationTime, aura.expirationTime)
+            ShowSotFGlow(buffFrame, spellId, aura)
+        elseif addon.invigorate and invigorate_spells[spellId] then
+            addon:Debug("Invigorate")
+            ShowSotFGlow(buffFrame, spellId, aura)
+        elseif addon.flourish then
+            addon:Debug("Flourish")
+            ShowSotFGlow(buffFrame, spellId, aura, true)
+        elseif addon.verdant then
+            addon:Debug("Verdant")
+            ShowSotFGlow(buffFrame, spellId, aura)
+        elseif (modf(spell.expirationTime) + 1) == modf(aura.expirationTime) then
+            addon:Debug("Nurturing Dormancy")
+            -- Workaround for Nurturing Dormancy
+            ShowSotFGlow(buffFrame, spellId, aura)
+        else
+            addon:Debug("Expiration Time Mismatch", spell.expirationTime, aura.expirationTime)
+            -- This aura is not the one we want to show the glow for
+            sotf.spellIds[spellId].instances[aura.auraInstanceID] = nil
+        end
     end
 end
 
@@ -237,10 +251,15 @@ function addon:HandleAura(buffFrame, aura)
     if not aura or not aura.isFromPlayerOrPlayerPet or aura.isHarmful then return end
 
     if self.db.sotf then
-        local spell = self.sotfInfo.instances[aura.spellId]
-        if spell and spell.aura then
-            if spell.aura.expirationTime < GetTime() then
-                self.sotfInfo.instances[aura.spellId] = nil
+        local sotf = self.sotfInfo.spellIds
+        local time = GetTime()
+        for _, info in pairs(sotf) do
+            if next(info.instances) ~= nil then
+                for instanceID, a in pairs(info.instances) do
+                    if a.expirationTime < time then
+                        info.instances[instanceID] = nil
+                    end
+                end
             end
         end
         glowIfSotf(aura, buffFrame)
@@ -269,16 +288,14 @@ local function addInstance(spellId, time)
         addon.lux = true
         after(0.01, function()
             if not addon.sotf_up then
-                sotf.instances[spellId] = {
-                    time = time,
-                }
+                addon:Debug("Adding...FORMER")
+                sotf.spellIds[spellId].time = time
             end
             addon.lux = false
         end)
     else
-        sotf.instances[spellId] = {
-            time = GetTime(),
-        }
+        addon:Debug("Adding...")
+        sotf.spellIds[spellId].time = time
     end
 end
 
@@ -316,7 +333,7 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
         return
     end
 
-    if event == "SPELL_CAST_SUCCESS" and (cast_success_spells[spellId] or invigorate_spells[spellId]) then
+    if event == "SPELL_CAST_SUCCESS" and cast_success_spells[spellId] then
         if spellId == 392160 then
             self.invigorate = true
             after(0.1, disableInvigorate)
@@ -403,13 +420,20 @@ function addon:PLAYER_LOGIN()
     self.db = LifebloomGlowDB
     self.auras = {}
     self.sotfInfo = {
-        instances = {},
+        spellIds = {},
     }
     self.lbInstances = {}
     self.playerGUID = UnitGUID("player")
     self.activeTalents = {}
 
     self:Options()
+
+    for spellId in pairs(sotf_spells) do
+        self.sotfInfo.spellIds[spellId] = {
+            instances = {},
+            time = 0,
+        }
+    end
 
     ---------------------------
     -- Slash Handler
