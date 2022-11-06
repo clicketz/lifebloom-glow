@@ -315,13 +315,6 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
     local ogNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82061)
     self.overgrowthEnabled = ogNode and ogNode.activeRank > 0
 
-    -- We need to use CLEU for overgrowth
-    if self.overgrowthEnabled then
-        eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    else
-        eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    end
-
     for spellId in pairs(sotf_spells) do
         local spell = Spell:CreateFromSpellID(spellId)
 
@@ -330,6 +323,7 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
 
             desc = desc:gsub(",", "")
             local amount, dur = desc:match("(%d+) over (%d+) sec")
+            if not amount or not dur then return end
 
             self.baseTickCache[spellId] = amount / dur
         end)
