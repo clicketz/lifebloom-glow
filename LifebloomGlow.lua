@@ -139,7 +139,7 @@ function addon:GetTooltipInfo(unit, auraInstanceID)
     if #tooltipSize then
         return text, unpack(tooltipSize)
     else
-        return text, 0
+        return text, 0, 1
     end
 end
 
