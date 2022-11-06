@@ -332,7 +332,7 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
             local desc = spell:GetSpellDescription()
 
             desc = desc:gsub(",", "")
-            local amount, dur = desc:match("(%d+) over (%d+) sec")
+            local amount, dur = desc:match("(%d[%d%.]*) over (%d[%d%.]*) sec")
             if not amount or not dur then return end
 
             self.baseTickCache[spellId] = amount / dur
