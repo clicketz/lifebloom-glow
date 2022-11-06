@@ -381,7 +381,7 @@ end
 function addon:EnableSotf(enable)
     self.db.sotf = enable
 
-    if enable then
+    if self.playerClass == "DRUID" and enable then
         eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
         eventFrame:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED")
         eventFrame:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
@@ -411,6 +411,7 @@ function addon:PLAYER_LOGIN()
     self.lbInstances = {}
     self.lbAuras = {}
     self.playerGUID = UnitGUID("player")
+    self.playerClass = select(2, UnitClass("player"))
 
     self:Options()
 
@@ -429,8 +430,8 @@ function addon:PLAYER_LOGIN()
     end
 
     -- Only load for druids
-    if (select(2, UnitClass("player")) ~= "DRUID") then
-        self:Print("Disabled when not playing a Druid.")
+    if (self.playerClass ~= "DRUID") then
+        self:Print("Functionality disabled when not playing a |cffff7c0aDruid|r")
         return
     end
 
