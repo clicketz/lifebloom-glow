@@ -41,7 +41,7 @@ local defaults = {
 local sotf_spells = {
     [774] = 2.4, -- Rejuv
     [155777] = 2.4, -- Germination
-    [8936] = 2.35, -- Regrowth
+    [8936] = 2.4, -- Regrowth
     [48438] = 1.45, -- Wild Growth
 }
 
@@ -164,7 +164,7 @@ end
 ---------------------------
 -- SotF Tables
 ---------------------------
-local sotfGlows = {}
+local sotfCache = {}
 local amts = {}
 
 ---------------------------
@@ -174,9 +174,9 @@ local function glowSotf(buffFrame, aura, amtNeeded)
     buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
     buffFrame.glow:Show()
 
-    sotfGlows[aura.auraInstanceID] = sotfGlows[aura.auraInstanceID] or {}
-    sotfGlows[aura.auraInstanceID].state = amtNeeded
-    sotfGlows[aura.auraInstanceID].aura = aura
+    sotfCache[aura.auraInstanceID] = sotfCache[aura.auraInstanceID] or {}
+    sotfCache[aura.auraInstanceID].state = amtNeeded
+    sotfCache[aura.auraInstanceID].aura = aura
 end
 
 ---------------------------
@@ -188,7 +188,7 @@ local function glowIfSotf(aura, buffFrame)
     if not mult or not unit then return end
     local sId = aura.spellId
     local amtNeeded
-    local prevGlow = sotfGlows[aura.auraInstanceID]
+    local prevGlow = sotfCache[aura.auraInstanceID]
     local _, curTick, rate = addon:GetTooltipInfo(unit, aura.auraInstanceID)
     local cachedTick = addon.baseTickCache[sId]
     -- Rejuv (and germ) apply its own mastery to itself, but the tooltip doesn't reflect it.
@@ -243,6 +243,10 @@ local function glowIfSotf(aura, buffFrame)
         end)
     elseif (curTick >= amtNeeded) then
         glowSotf(buffFrame, aura, amtNeeded)
+    elseif not prevGlow then
+        sotfCache[aura.auraInstanceID] = {}
+        sotfCache[aura.auraInstanceID].state = amtNeeded
+        sotfCache[aura.auraInstanceID].aura = aura
     end
 end
 
@@ -274,10 +278,10 @@ function addon:HandleAura(buffFrame, aura)
     or aura.isHarmful then return end
 
     if self.db.sotf then
-        for k, v in pairs(sotfGlows) do
+        for k, v in pairs(sotfCache) do
             local a = v.aura
             if a and (a.expirationTime < GetTime()) then
-                sotfGlows[k] = nil
+                sotfCache[k] = nil
             end
         end
         glowIfSotf(aura, buffFrame)
