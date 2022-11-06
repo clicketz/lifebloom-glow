@@ -110,9 +110,14 @@ end
 -- Replace with C_TooltipInfo in 10.0.2
 ----------------------------------------
 function addon:GetTooltipInfo(unit, auraInstanceID)
+    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+
     local tooltip = addon:GetHiddenTooltip()
     tooltip:ClearLines()
-    tooltip:SetUnitBuffByAuraInstanceID(unit, auraInstanceID)
+
+    if aura then
+        tooltip:SetUnitBuffByAuraInstanceID(unit, auraInstanceID)
+    end
 
     local tooltipTextLine = select(5, tooltip:GetRegions())
     local text = tooltipTextLine and tooltipTextLine:GetObjectType() == "FontString" and tooltipTextLine:GetText() or ""
@@ -178,10 +183,10 @@ end
 ---------------------------
 local function glowIfSotf(aura, buffFrame)
     local mult = sotf_spells[aura.spellId]
-    if not mult then return end
+    local unit = buffFrame:GetParent().unit
+    if not mult or not unit then return end
     local sId = aura.spellId
     local amtNeeded
-    local unit = buffFrame:GetParent().unit
     local prevGlow = sotfGlows[aura.auraInstanceID]
     local _, curTick, rate = addon:GetTooltipInfo(unit, aura.auraInstanceID)
     local cachedTick = addon.baseTickCache[sId]
