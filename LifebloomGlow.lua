@@ -170,9 +170,11 @@ local amts = {}
 ---------------------------
 -- SotF Glow Func
 ---------------------------
-local function glowSotf(buffFrame, aura, amtNeeded)
-    buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
-    buffFrame.glow:Show()
+local function glowSotf(buffFrame, aura, amtNeeded, glow)
+    if glow then
+        buffFrame.glow:SetVertexColor(unpack(addon.db.sotfColor))
+        buffFrame.glow:Show()
+    end
 
     sotfCache[aura.auraInstanceID] = sotfCache[aura.auraInstanceID] or {}
     sotfCache[aura.auraInstanceID].state = amtNeeded
@@ -241,12 +243,8 @@ local function glowIfSotf(aura, buffFrame)
                 glowIfSotf(aura, buffFrame)
             end
         end)
-    elseif (curTick >= amtNeeded) then
-        glowSotf(buffFrame, aura, amtNeeded)
-    elseif not prevGlow then
-        sotfCache[aura.auraInstanceID] = {}
-        sotfCache[aura.auraInstanceID].state = amtNeeded
-        sotfCache[aura.auraInstanceID].aura = aura
+    else
+        glowSotf(buffFrame, aura, amtNeeded, curTick >= amtNeeded)
     end
 end
 
