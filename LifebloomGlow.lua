@@ -38,7 +38,7 @@ local defaults = {
 -- Spells Affected by SoTF
 -- [spellId] = sotf multiplier
 --------------------------------
-local sotf_spells = {
+local sotfSpells = {
     [774] = 2.4, -- Rejuv
     [155777] = 2.4, -- Germination
     [8936] = 2.4, -- Regrowth
@@ -185,7 +185,7 @@ end
 -- SotF Decider
 ---------------------------
 local function glowIfSotf(aura, buffFrame)
-    local mult = sotf_spells[aura.spellId]
+    local mult = sotfSpells[aura.spellId]
     local unit = buffFrame:GetParent().unit
     if not mult or not unit then return end
     local sId = aura.spellId
@@ -278,7 +278,7 @@ function addon:HandleAura(buffFrame, aura)
     or not aura.isFromPlayerOrPlayerPet
     or aura.isHarmful then return end
 
-    if self.db.sotf then
+    if self.db.sotf and sotfSpells[aura.spellId] then
         for k, v in pairs(sotfCache) do
             local a = v.aura
             if a and (a.expirationTime < GetTime()) then
@@ -322,7 +322,7 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
 
     self.harmBlooming = hbRank + 1
 
-    for spellId in pairs(sotf_spells) do
+    for spellId in pairs(sotfSpells) do
         local spell = Spell:CreateFromSpellID(spellId)
 
         spell:ContinueOnSpellLoad(function()
@@ -406,6 +406,7 @@ function addon:PLAYER_LOGIN()
     for k in pairs(defaults) do
         if LifebloomGlowDB[k] == nil then
             LifebloomGlowDB = CopyTable(defaults)
+            break
         end
     end
 
