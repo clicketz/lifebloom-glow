@@ -193,6 +193,14 @@ local function glowIfSotf(aura, buffFrame)
     local prevGlow = sotfCache[aura.auraInstanceID]
     local _, curTick, rate = addon:GetTooltipInfo(unit, aura.auraInstanceID)
     local cachedTick = addon.baseTickCache[sId]
+
+    -- Cache invalid. Rebuild it.
+    -- Should be exceedingly rare.
+    if not cachedTick then
+        addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
+        return
+    end
+
     -- Rejuv (and germ) apply its own mastery to itself, but the tooltip doesn't reflect it.
     -- This is unique to these two spells, so we need to account for it.
     curTick = curTick / rate * ((sId == 774 or sId == 155777) and (1 + addon.mastery) or 1)
@@ -224,9 +232,7 @@ local function glowIfSotf(aura, buffFrame)
         amtNeeded = cachedTick * mult * masteryBonus
     end
 
-    if not cachedTick then
-        addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
-    elseif addon.sotfUp and not prevGlow and (sId == 48438) then
+    if addon.sotfUp and not prevGlow and (sId == 48438) then
         -- Fix for Wild Growth having different tick values for different targets
         -- but Blizzard still uses the same auraInstanceID for all of them.
         tinsert(amts, amtNeeded)
@@ -313,16 +319,11 @@ end
 -- Talent Updates
 ---------------------------
 function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
-    wipe(self.baseTickCache)
-
+    -- Get the rank for Harmonius Blooming to determine mastery stacks with lifebloom
     local hbNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82065)
     local hbRank = hbNode and hbNode.activeRank or 0
 
     self.harmBlooming = hbRank + 1
-
-    -- Check for Overgrowth
-    local ogNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82061)
-    self.overgrowthEnabled = ogNode and ogNode.activeRank > 0
 
     for spellId in pairs(sotf_spells) do
         local spell = Spell:CreateFromSpellID(spellId)
