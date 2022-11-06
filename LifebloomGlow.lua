@@ -207,7 +207,7 @@ local function glowIfSotf(aura, buffFrame)
 
     -- Workaround for Overgrowth. It always applies SotF to rejuv/germ and also at the base tick rate.
     if addon.overgrowth and (sId == 774 or sId == 155777) then
-        if curTick > cachedTick * mult then
+        if curTick >= cachedTick * mult then
             glowSotf(buffFrame, aura, curTick, true)
         end
         return
