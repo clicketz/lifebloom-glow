@@ -223,11 +223,11 @@ local function glowIfSotf(aura, buffFrame)
 
     if not cachedTick then
         addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
-    elseif not prevGlow and (sId == 48438) then
+    elseif addon.sotfUp and not prevGlow and (sId == 48438) then
         -- Fix for Wild Growth having different tick values for different targets
         -- but Blizzard still uses the same auraInstanceID for all of them.
         tinsert(amts, amtNeeded)
-        after(0.05, function()
+        after(0.02, function()
             if next(amts) ~= nil then
                 amtNeeded = min(unpack(amts))
 
@@ -340,13 +340,22 @@ function addon:ACTIVE_PLAYER_SPECIALIZATION_CHANGED()
     self:TRAIT_TREE_CURRENCY_INFO_UPDATED()
 end
 
----------------------------
--- CLEU
----------------------------
+-----------------------------------
+-- Localized functions for CLEU
+-- so C_Timer doesn't have to
+-- create new functions every run
+-----------------------------------
 local function disableOvergrowth()
     addon.overgrowth = false
 end
 
+local function disableSotfAura()
+    addon.sotfUp = false
+end
+
+---------------------------
+-- CLEU
+---------------------------
 function addon:COMBAT_LOG_EVENT_UNFILTERED()
     if not self.db.sotf then
         eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
@@ -358,8 +367,11 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
 
     if event == "SPELL_CAST_SUCCESS" and spellId == 203651 then
         self.overgrowth = true
-
         after(0, disableOvergrowth)
+    elseif event == "SPELL_AURA_APPLIED" and spellId == 114108 then
+        self.sotfUp = true
+    elseif event == "SPELL_AURA_REMOVED" and spellId == 114108 then
+        after(0, disableSotfAura)
     end
 end
 
