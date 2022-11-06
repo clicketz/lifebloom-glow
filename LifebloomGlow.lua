@@ -21,6 +21,7 @@ local UnitClass = UnitClass
 local after = C_Timer.After
 local wipe = wipe
 local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+local GetMasteryEffect = GetMasteryEffect
 
 ---------------------------
 -- Database Defaults
@@ -300,10 +301,16 @@ function addon:TargetFocus(root)
 end
 
 ---------------------------
+-- Updating Mastery
+---------------------------
+function addon:COMBAT_RATING_UPDATE()
+    self.mastery = GetMasteryEffect() / 100
+end
+
+---------------------------
 -- Talent Updates
 ---------------------------
 function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
-    self.mastery = GetMasteryEffect() / 100
     wipe(self.baseTickCache)
 
     local hbNode = C_Traits.GetNodeInfo(C_ClassTalents.GetActiveConfigID(), 82065)
@@ -379,7 +386,9 @@ function addon:EnableSotf(enable)
         eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
         eventFrame:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED")
         eventFrame:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+        eventFrame:RegisterEvent("COMBAT_RATING_UPDATE")
         self:TRAIT_TREE_CURRENCY_INFO_UPDATED()
+        self:COMBAT_RATING_UPDATE()
     else
         eventFrame:UnregisterAllEvents()
     end
