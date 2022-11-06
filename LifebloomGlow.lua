@@ -228,8 +228,7 @@ local function glowIfSotf(aura, buffFrame)
         end)
         hots = (hots - 1 > 0) and hots - 1 or 0
 
-        local masteryBonus = 1 + (addon.mastery * hots)
-        amtNeeded = cachedTick * mult * masteryBonus
+        amtNeeded = cachedTick * mult * (1 + (addon.mastery * hots))
     end
 
     if addon.sotfUp and not prevGlow and (sId == 48438) then
