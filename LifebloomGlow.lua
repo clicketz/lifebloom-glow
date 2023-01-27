@@ -259,7 +259,7 @@ local function glowIfLB(aura, buffFrame)
         addon.lbInstances[aura.auraInstanceID] = true
         addon.lbAuras[buffFrame] = aura
         addon.lbUpdate:Show()
-    elseif addon.lbAuras[buffFrame] then
+    else
         addon.lbAuras[buffFrame] = nil
     end
 end
@@ -274,8 +274,13 @@ function addon:HandleAura(buffFrame, aura)
 
     buffFrame.glow:Hide()
 
-    if not aura
-    or not aura.isFromPlayerOrPlayerPet
+    if not aura then return end
+
+    if self.db.lb then
+        glowIfLB(aura, buffFrame)
+    end
+
+    if not aura.isFromPlayerOrPlayerPet
     or aura.isHarmful then return end
 
     if self.db.sotf and sotfSpells[aura.spellId] then
@@ -287,19 +292,12 @@ function addon:HandleAura(buffFrame, aura)
         end
         glowIfSotf(aura, buffFrame)
     end
-
-    if self.db.lb then
-        glowIfLB(aura, buffFrame)
-    end
 end
 
 ---------------------------
 -- Target/Focus Frame Core
 ---------------------------
 function addon:TargetFocus(root)
-    -- No need to waste CPU on enemies except mages for spell stealing our hots
-    if not UnitIsFriend("player", root.unit) and not select(2, UnitClass(root.unit) == "MAGE") then return end
-
     for buffFrame in root.auraPools:EnumerateActive() do
         self:HandleAura(buffFrame, C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID))
     end
