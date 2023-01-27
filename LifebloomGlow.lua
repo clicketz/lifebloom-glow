@@ -16,7 +16,6 @@ local min      = math.min
 ---------------------------
 local CopyTable = CopyTable
 local GetTime = GetTime
-local UnitIsFriend = UnitIsFriend
 local UnitClass = UnitClass
 local after = C_Timer.After
 local wipe = wipe
