@@ -99,8 +99,8 @@ function addon:Options()
     local sotf = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
     sotf:SetPoint("LEFT", sotfColor, "RIGHT", 8, 0)
     sotf:SetHitRectInsets(0, -100, 0, 0)
-    sotf.text:SetText("Show Soul of the Forest Glow (Experimental)")
-    sotf.tooltipText = "Enable a glow effect on buff frames when the buff is empowered by Soul of the Forest."
+    sotf.text:SetText("Show Soul of the Forest Glow |cFFFF0000(Experimental)|r")
+    sotf.tooltipText = "Enable a glow effect on buff frames when the buff is empowered by Soul of the Forest. This is highly experimental and likely inaccurate."
     sotf:SetChecked(self.db.sotf)
     sotf:SetScript("OnClick", function(s)
         self:EnableSotf(s:GetChecked())

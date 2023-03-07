@@ -29,8 +29,9 @@ local defaults = {
     throttle = 0.01,
     lb = true,
     lbColor = { 0, 1, 0, 1 },
-    sotf = true,
+    sotf = false,
     sotfColor = { 0.66, 0, 1, 1 },
+    ver = 1,
 }
 
 --------------------------------
@@ -400,10 +401,15 @@ function addon:PLAYER_LOGIN()
     ---------------------------
     -- DB Validation
     ---------------------------
-    for k in pairs(defaults) do
-        if LifebloomGlowDB[k] == nil then
-            LifebloomGlowDB = CopyTable(defaults)
-            break
+    local ver = LifebloomGlowDB.ver or 0
+    if ver < 1 then
+        LifebloomGlowDB = CopyTable(defaults)
+    else
+        for k in pairs(defaults) do
+            if LifebloomGlowDB[k] == nil then
+                LifebloomGlowDB = CopyTable(defaults)
+                break
+            end
         end
     end
 
