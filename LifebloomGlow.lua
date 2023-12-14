@@ -10,6 +10,7 @@ local select   = select
 local tinsert  = table.insert
 local tonumber = tonumber
 local min      = math.min
+local max      = math.max
 
 ---------------------------
 -- WoW API Upvalues
