@@ -83,8 +83,8 @@ end)
 ---------------------------
 -- Print Functions
 ---------------------------
-function addon:Print(msg)
-    print("|cFF50C878L|rifebloom|cFF50C878G|rlow: " .. msg)
+function addon:Print(...)
+    print("|cFF50C878L|rifebloom|cFF50C878G|rlow:", ...)
 end
 
 ---------------------------------
