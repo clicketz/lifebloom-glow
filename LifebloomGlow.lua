@@ -259,7 +259,7 @@ end
 -- LB Decider
 ---------------------------
 local function glowIfLB(aura, buffFrame)
-    if lifeblooms[aura.spellId] then
+    if lifeblooms[aura.spellId] and aura.isFromPlayerOrPlayerPet then
         addon.lbInstances[aura.auraInstanceID] = true
         addon.lbAuras[buffFrame] = aura
         addon.lbUpdate:Show()
