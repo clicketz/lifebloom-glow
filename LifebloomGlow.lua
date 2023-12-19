@@ -153,11 +153,15 @@ local function CreateGlowFrame(buffFrame)
     glowFrame:SetAllPoints()
     glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
 
+    local w, h = buffFrame:GetSize()
+    w = w / 2
+    h = h / 2
+
     local glow = glowFrame:CreateTexture(nil, "OVERLAY")
     glow:SetAtlas("newplayertutorial-drag-slotgreen")
     glow:SetDesaturated(true)
-    glow:SetPoint("TOPLEFT", -8.5, 8.5)
-    glow:SetPoint("BOTTOMRIGHT", 8.5, -8.5)
+    glow:SetPoint("TOPLEFT", -w, h)
+    glow:SetPoint("BOTTOMRIGHT", w, -h)
     buffFrame.glow = glow
 end
 
