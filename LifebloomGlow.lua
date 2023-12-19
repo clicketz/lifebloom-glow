@@ -3,14 +3,14 @@ local addonName, addon = ...
 ---------------------------
 -- Lua Upvalues
 ---------------------------
-local pairs    = pairs
-local unpack   = unpack
-local next     = next
-local select   = select
-local tinsert  = table.insert
+local pairs = pairs
+local unpack = unpack
+local next = next
+local select = select
+local tinsert = table.insert
 local tonumber = tonumber
-local min      = math.min
-local max      = math.max
+local min = math.min
+local max = math.max
 
 ---------------------------
 -- WoW API Upvalues
@@ -40,9 +40,9 @@ local defaults = {
 -- [spellId] = sotf multiplier
 --------------------------------
 local sotfSpells = {
-    [774] = 2.4, -- Rejuv
+    [774] = 2.4,    -- Rejuv
     [155777] = 2.4, -- Germination
-    [8936] = 2.4, -- Regrowth
+    [8936] = 2.4,   -- Regrowth
     [48438] = 1.45, -- Wild Growth
 }
 
@@ -50,7 +50,7 @@ local sotfSpells = {
 -- Lifebloom SpellIds
 ---------------------------
 local lifeblooms = {
-    [33763] = true, -- Normal
+    [33763] = true,  -- Normal
     [188550] = true, -- Undergrowth
 }
 
@@ -58,16 +58,16 @@ local lifeblooms = {
 -- All Druid hots that affect mastery
 ---------------------------------------
 local druidHots = {
-    [774] = true, -- Rejuv
+    [774] = true,    -- Rejuv
     [155777] = true, -- Germination
-    [8936] = true, -- Regrowth
-    [48438] = true, -- Wild Growth
-    [33763] = true, -- Lifebloom
+    [8936] = true,   -- Regrowth
+    [48438] = true,  -- Wild Growth
+    [33763] = true,  -- Lifebloom
     [188550] = true, -- Undergrowth
-    [740] = true, -- Tranquility
+    [740] = true,    -- Tranquility
     [102352] = true, -- Cenarion Ward Hot
     [200389] = true, -- Cultivation
-    [22842] = true, -- Frenzied Regen
+    [22842] = true,  -- Frenzied Regen
     [383193] = true, -- Grove Tending
     [207386] = true, -- Spring Blossoms
 }
