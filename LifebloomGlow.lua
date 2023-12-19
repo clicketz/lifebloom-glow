@@ -276,16 +276,23 @@ function addon:HandleAura(buffFrame, aura)
         CreateGlowFrame(buffFrame)
     end
 
-    buffFrame.glow:Hide()
+    if not aura then
+        buffFrame.glow:Hide()
+        return
+    end
 
-    if not aura then return end
+    if not aura.isFromPlayerOrPlayerPet or not lifeblooms[aura.spellId] then
+        buffFrame.glow:Hide()
+    end
 
     if self.db.lb then
         glowIfLB(aura, buffFrame)
     end
 
     if not aura.isFromPlayerOrPlayerPet
-    or aura.isHarmful then return end
+    or aura.isHarmful then
+        return
+    end
 
     if self.db.sotf and sotfSpells[aura.spellId] then
         for k, v in pairs(sotfCache) do
