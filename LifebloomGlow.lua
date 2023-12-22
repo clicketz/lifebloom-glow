@@ -88,44 +88,16 @@ function addon:Print(...)
     print("|cFF50C878L|rifebloom|cFF50C878G|rlow:", ...)
 end
 
----------------------------------
--- Hidden Tooltip
--- Credit: WeakAuras
--- For processing tooltip info
----------------------------------
-function addon:GetHiddenTooltip()
-    if not self.hiddenTooltip then
-        self.hiddenTooltip = CreateFrame("GameTooltip", "LifebloomGlowTooltip", nil, "GameTooltipTemplate")
-        self.hiddenTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-        self.hiddenTooltip:AddFontStrings(
-            self.hiddenTooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
-            self.hiddenTooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
-        )
-    end
-
-    return self.hiddenTooltip
-end
-
-----------------------------------------
+---------------------------
 -- Get Tooltip Info
--- Credit: WeakAuras
--- Replace with C_TooltipInfo in 10.0.2
-----------------------------------------
+---------------------------
 function addon:GetTooltipInfo(unit, auraInstanceID)
-    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
-
-    local tooltip = addon:GetHiddenTooltip()
-    tooltip:ClearLines()
-
-    if aura then
-        tooltip:SetUnitBuffByAuraInstanceID(unit, auraInstanceID)
-    end
-
-    local tooltipTextLine = select(5, tooltip:GetRegions())
-    local text = tooltipTextLine and tooltipTextLine:GetObjectType() == "FontString" and tooltipTextLine:GetText() or ""
-    local tooltipSize = {}
+    local data = C_TooltipInfo.GetUnitBuffByAuraInstanceID(unit, auraInstanceID)
+    local text = data.lines[2]
+    local numbers = {}
 
     if text then
+        text = text.leftText
         for t in text:gmatch("(%d[%d%.,]*)") do
             if (LARGE_NUMBER_SEPERATOR == ",") then
                 t = t:gsub(",", "");
@@ -133,12 +105,12 @@ function addon:GetTooltipInfo(unit, auraInstanceID)
                 t = t:gsub("%.", "");
                 t = t:gsub(",", ".");
             end
-            tinsert(tooltipSize, tonumber(t));
+            tinsert(numbers, tonumber(t));
         end
     end
 
-    if #tooltipSize then
-        return text, unpack(tooltipSize)
+    if #numbers then
+        return text, max(numbers[1], numbers[2]), min(numbers[1], numbers[2])
     else
         return text, 0, 1
     end
@@ -333,9 +305,20 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
 
         spell:ContinueOnSpellLoad(function()
             local desc = spell:GetSpellDescription()
+            local numbers = {}
 
-            desc = desc:gsub(",", "")
-            local amount, dur = desc:match("(%d[%d%.]*) over (%d[%d%.]*) sec")
+            for t in desc:gmatch("(%d[%d%.,]*)") do
+                if #numbers == 2 then break end
+                if (LARGE_NUMBER_SEPERATOR == ",") then
+                    t = t:gsub(",", "");
+                else
+                    t = t:gsub("%.", "");
+                    t = t:gsub(",", ".");
+                end
+                tinsert(numbers, tonumber(t));
+            end
+
+            local amount, dur = max(numbers[1], numbers[2]), min(numbers[1], numbers[2])
             if not amount or not dur then return end
 
             self.baseTickCache[spellId] = amount / dur
