@@ -40,10 +40,10 @@ local defaults = {
 -- [spellId] = sotf multiplier
 --------------------------------
 local sotfSpells = {
-    [774] = 2.4,    -- Rejuv
-    [155777] = 2.4, -- Germination
-    [8936] = 2.4,   -- Regrowth
-    [48438] = 1.45, -- Wild Growth
+    [774] = 2.5,    -- Rejuv
+    [155777] = 2.5, -- Germination
+    [8936] = 2.5,   -- Regrowth
+    [48438] = 1.5,  -- Wild Growth
 }
 
 ---------------------------
@@ -70,6 +70,22 @@ local druidHots = {
     [22842] = true,  -- Frenzied Regen
     [383193] = true, -- Grove Tending
     [207386] = true, -- Spring Blossoms
+}
+
+---------------------------------------
+-- Tooltip Indices per Spell
+-- Used for sotf spells whose tooltips
+-- have more than 2 numbers
+---------------------------------------
+local tooltipIndex = {
+    [48438] = { -- Wild Growth
+        amount = 4,
+        dur = 2,
+    },
+    [8936] = { -- Regrowth
+        amount = 2,
+        dur = 1,
+    }
 }
 
 ---------------------------
@@ -115,6 +131,14 @@ function addon:GetTooltipInfo(unit, auraInstanceID)
         return text, 0, 1
     end
 end
+
+------------------------
+-- Tooltip Data Update
+------------------------
+function addon:TOOLTIP_DATA_UPDATE(dataInstanceID)
+    print("DATA INSTANCE ID:", dataInstanceID)
+end
+
 
 ---------------------------
 -- Glow Frame Func
@@ -162,8 +186,8 @@ local function glowIfSotf(aura, buffFrame)
     local unit = buffFrame:GetParent().unit
     if not mult or not unit then return end
     local sId = aura.spellId
-    local amtNeeded
-    local prevGlow = sotfCache[aura.auraInstanceID]
+    local amtNeeded = math.huge
+    local cached = sotfCache[aura.auraInstanceID]
     local _, curTick, rate = addon:GetTooltipInfo(unit, aura.auraInstanceID)
     local cachedTick = addon.baseTickCache[sId]
 
@@ -186,25 +210,24 @@ local function glowIfSotf(aura, buffFrame)
         return
     end
 
-    if prevGlow then
-        amtNeeded = prevGlow.state
+    if cached then
+        amtNeeded = cached.state
     else
         local hots = 0
         AuraUtil.ForEachAura(unit, "HELPFUL", nil, function(_, _, _, _, _, _, _, _, _, spellId)
             local incr = 1
-            if spellId == 33763 then
+            if lifeblooms[spellId] then
                 incr = addon.harmBlooming
             end
             if druidHots[spellId] then
                 hots = hots + incr
             end
         end)
-        hots = (hots - 1 > 0) and hots - 1 or 0
 
         amtNeeded = cachedTick * mult * (1 + (addon.mastery * hots))
     end
 
-    if addon.sotfUp and not prevGlow and (sId == 48438) then
+    if addon.sotfUp and not cached and (sId == 48438) then
         -- Fix for Wild Growth having different tick values for different targets
         -- but Blizzard still uses the same auraInstanceID for all of them.
         tinsert(amts, amtNeeded)
@@ -308,7 +331,6 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
             local numbers = {}
 
             for t in desc:gmatch("(%d[%d%.,]*)") do
-                if #numbers == 2 then break end
                 if (LARGE_NUMBER_SEPERATOR == ",") then
                     t = t:gsub(",", "");
                 else
@@ -318,7 +340,17 @@ function addon:TRAIT_TREE_CURRENCY_INFO_UPDATED()
                 tinsert(numbers, tonumber(t));
             end
 
-            local amount, dur = max(numbers[1], numbers[2]), min(numbers[1], numbers[2])
+            local amount, dur
+
+            if #numbers > 2 then
+                table.sort(numbers)
+                amount = numbers[tooltipIndex[spellId].amount]
+                dur = numbers[tooltipIndex[spellId].dur]
+            else
+                amount = max(numbers[1], numbers[2])
+                dur = min(numbers[1], numbers[2])
+            end
+
             if not amount or not dur then return end
 
             self.baseTickCache[spellId] = amount / dur
@@ -376,6 +408,7 @@ function addon:EnableSotf(enable)
         eventFrame:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED")
         eventFrame:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
         eventFrame:RegisterEvent("COMBAT_RATING_UPDATE")
+        -- eventFrame:RegisterEvent("TOOLTIP_DATA_UPDATE")
         self:TRAIT_TREE_CURRENCY_INFO_UPDATED()
         self:COMBAT_RATING_UPDATE()
     else
