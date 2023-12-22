@@ -93,7 +93,7 @@ end
 ---------------------------
 function addon:GetTooltipInfo(unit, auraInstanceID)
     local data = C_TooltipInfo.GetUnitBuffByAuraInstanceID(unit, auraInstanceID)
-    local text = data.lines[2]
+    local text = data and data.lines[2]
     local numbers = {}
 
     if text then
