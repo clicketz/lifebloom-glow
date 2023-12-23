@@ -406,6 +406,21 @@ function addon:PLAYER_LOGIN()
         end
     end
 
+    -------------------------------------------
+    -- Register to Blizzard Compartment Frame
+    -------------------------------------------
+    if AddonCompartmentFrame then
+        AddonCompartmentFrame:RegisterAddon({
+            text = "LifebloomGlow",
+            icon = "Interface\\AddOns\\LifebloomGlow\\media\\logo",
+            notCheckable = true,
+            func = function()
+                InterfaceOptionsFrame_OpenToCategory(addonName)
+                InterfaceOptionsFrame_OpenToCategory(addonName)
+            end,
+        })
+    end
+
     -- Only load for druids
     if (self.playerClass ~= "DRUID") then
         self:Print("Functionality disabled when not playing a |cffff7c0aDruid|r")

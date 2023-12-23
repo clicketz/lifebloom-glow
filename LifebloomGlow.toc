@@ -6,6 +6,7 @@
 ## X-Curse-Project-ID: 296075
 ## X-WoWI-ID: 24684
 ## X-Wago-ID: Xb6XWBNp
+## IconTexture: Interface\AddOns\LifebloomGlow\media\logo
 ## SavedVariables: LifebloomGlowDB
 
 Options.lua
