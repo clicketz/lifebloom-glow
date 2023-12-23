@@ -21,13 +21,16 @@ globals = {
 
     -- Lua
     "_G",
+    "difftime",
 
     -- WoW
+    "AddonCompartmentFrame",
     "CreateFrame",
     "C_UnitAuras",
     "C_Timer",
     "C_Traits",
     "C_ClassTalents",
+    "EventRegistry",
     "Spell",
     "CopyTable",
     "GetTime",
