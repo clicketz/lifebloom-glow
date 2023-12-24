@@ -184,7 +184,7 @@ end
 -- LB Decider
 ---------------------------
 local function glowIfLB(aura, buffFrame)
-    if lifeblooms[aura.spellId] and aura.isFromPlayerOrPlayerPet then
+    if lifeblooms[aura.spellId] and (aura.sourceUnit == "player") then
         addon.lbInstances[aura.auraInstanceID] = true
         addon.lbAuras[buffFrame] = aura
         addon.lbUpdate:Show()
@@ -216,7 +216,9 @@ function addon:HandleAura(buffFrame, aura)
         buffFrame.GUID = UnitGUID(buffFrame:GetParent().unit)
     end
 
-    if not aura.isFromPlayerOrPlayerPet or not lifeblooms[spellId] then
+    -- Attempt at not hiding and re-showing lifebloom glow so often
+    -- to prevent flicker. Might be unnecessary.
+    if not lifeblooms[spellId] then
         buffFrame.glow:Hide()
     end
 
@@ -224,8 +226,8 @@ function addon:HandleAura(buffFrame, aura)
         glowIfLB(aura, buffFrame)
     end
 
-    if not aura.isFromPlayerOrPlayerPet
-    or aura.isHarmful then
+    if aura.sourceUnit ~= "player" or aura.isHarmful then
+        buffFrame.glow:Hide()
         return
     end
 
