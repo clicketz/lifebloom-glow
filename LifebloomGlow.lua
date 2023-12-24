@@ -189,6 +189,7 @@ local function glowIfLB(aura, buffFrame)
         addon.lbAuras[buffFrame] = aura
         addon.lbUpdate:Show()
     else
+        buffFrame.glow:Hide()
         addon.lbAuras[buffFrame] = nil
     end
 end
@@ -217,18 +218,13 @@ function addon:HandleAura(buffFrame, aura)
         buffFrame.GUID = UnitGUID(buffFrame:GetParent().unit)
     end
 
-    -- Attempt at not hiding and re-showing lifebloom glow so often
-    -- to prevent flicker. Might be unnecessary.
-    if not lifeblooms[spellId] then
-        buffFrame.glow:Hide()
-    end
-
     if self.db.lb then
         glowIfLB(aura, buffFrame)
+    else
+        buffFrame.glow:Hide()
     end
 
     if aura.sourceUnit ~= "player" then
-        buffFrame.glow:Hide()
         return
     end
 
