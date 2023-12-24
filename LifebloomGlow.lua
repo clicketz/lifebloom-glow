@@ -201,7 +201,8 @@ function addon:HandleAura(buffFrame, aura)
         CreateGlowFrame(buffFrame)
     end
 
-    if not aura then
+    if not aura
+    or aura.isHarmful then
         buffFrame.glow:Hide()
         return
     end
@@ -226,7 +227,7 @@ function addon:HandleAura(buffFrame, aura)
         glowIfLB(aura, buffFrame)
     end
 
-    if aura.sourceUnit ~= "player" or aura.isHarmful then
+    if aura.sourceUnit ~= "player" then
         buffFrame.glow:Hide()
         return
     end
