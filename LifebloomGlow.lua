@@ -31,7 +31,6 @@ local defaults = {
 
 --------------------------------
 -- Spells Affected by SoTF
--- [spellId] = sotf multiplier
 --------------------------------
 local sotfSpells = {
     [774] = true,    -- Rejuv
