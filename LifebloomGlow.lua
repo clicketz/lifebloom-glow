@@ -152,29 +152,31 @@ local function glowIfSotf(aura, buffFrame)
     local spellId = aura.spellId
     local cache = sotfCache[spellId .. GUID]
 
-    if addon.overgrowth then
-        local time = aura.expirationTime - aura.duration
-        if difftime(time, cache.time) == 0 and rejuvs[spellId] then
-            cache.enabled = true
-        else
-            deleteCachedAura(spellId, GUID)
-            return
-        end
-    end
-
-    if cache and cache.enabled then
-        local time = aura.expirationTime - aura.duration
-        local expirationDiff = math.floor(aura.expirationTime - cache.expirationTime + 0.5)
-
-        if cache.expirationTime ~= 0
-        and rejuvs[spellId]
-        and expirationDiff == 2 then -- Nurturing Dormancy
-            cache.time = time
+    if cache then
+        if addon.overgrowth then
+            local time = aura.expirationTime - aura.duration
+            if difftime(time, cache.time) == 0 and rejuvs[spellId] then
+                cache.enabled = true
+            else
+                deleteCachedAura(spellId, GUID)
+                return
+            end
         end
 
-        if difftime(time, cache.time) == 0 then
-            glowSotf(buffFrame)
-            cache.expirationTime = aura.expirationTime
+        if cache.enabled then
+            local time = aura.expirationTime - aura.duration
+            local expirationDiff = math.floor(aura.expirationTime - cache.expirationTime + 0.5)
+
+            if cache.expirationTime ~= 0
+            and rejuvs[spellId]
+            and expirationDiff == 2 then -- Nurturing Dormancy
+                cache.time = time
+            end
+
+            if difftime(time, cache.time) == 0 then
+                glowSotf(buffFrame)
+                cache.expirationTime = aura.expirationTime
+            end
         end
     end
 end
