@@ -25,6 +25,7 @@ globals = {
 
     -- WoW
     "AddonCompartmentFrame",
+    "C_AddOns",
     "CreateFrame",
     "C_UnitAuras",
     "C_Timer",
@@ -53,4 +54,5 @@ globals = {
     "WorldFrame",
     "wipe",
     "AuraUtil",
+    "Settings",
 }
