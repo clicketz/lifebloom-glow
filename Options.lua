@@ -19,11 +19,11 @@ function addon:Options()
 
     local author = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     author:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
-    author:SetFormattedText("|cFF50C878Author|r: %s", GetAddOnMetadata(addonName, "Author"))
+    author:SetFormattedText("|cFF50C878Author|r: %s", C_AddOns.GetAddOnMetadata(addonName, "Author"))
 
     local version = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     version:SetPoint("TOPLEFT", author, "BOTTOMLEFT", 0, -8)
-    version:SetFormattedText("|cFF50C878Version|r: %s", GetAddOnMetadata(addonName, "Version"))
+    version:SetFormattedText("|cFF50C878Version|r: %s", C_AddOns.GetAddOnMetadata(addonName, "Version"))
 
     local glowColor = CreateFrame("Button", nil, panel, "BackdropTemplate")
     glowColor:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -50)
@@ -36,20 +36,29 @@ function addon:Options()
     })
     glowColor:SetBackdropColor(unpack(self.db.lbColor))
     glowColor:SetScript("OnClick", function(s)
+        local red, green, blue = unpack(self.db.lbColor)
         ColorPickerFrame.hasOpacity = false
-        ColorPickerFrame.previousValues = { unpack(self.db.lbColor) }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.previousValues = {
+            r = red,
+            g = green,
+            b = blue,
+        }
+
+        local info = {}
+        info.swatchFunc = function()
             local r, g, b = ColorPickerFrame:GetColorRGB()
             self.db.lbColor = { r, g, b }
             s:SetBackdropColor(r, g, b)
         end
-        ColorPickerFrame.cancelFunc = function()
-            local r, g, b = unpack(ColorPickerFrame.previousValues)
-            self.db.lbColor = { r, g, b }
-            s:SetBackdropColor(r, g, b)
+        info.cancelFunc = function()
+            local prev = ColorPickerFrame.previousValues
+            self.db.lbColor = { prev.r, prev.g, prev.b }
+            s:SetBackdropColor(prev.r, prev.g, prev.b)
         end
-        ColorPickerFrame:SetColorRGB(unpack(self.db.lbColor))
-        ShowUIPanel(ColorPickerFrame)
+
+        info.r, info.g, info.b = unpack(self.db.lbColor)
+
+        ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
 
     local glow = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
@@ -78,22 +87,32 @@ function addon:Options()
         edgeSize = 4,
         insets = { left = 2, right = 2, top = 2, bottom = 2 }
     })
+
     sotfColor:SetBackdropColor(unpack(self.db.sotfColor))
     sotfColor:SetScript("OnClick", function(s)
+        local red, green, blue = unpack(self.db.sotfColor)
         ColorPickerFrame.hasOpacity = false
-        ColorPickerFrame.previousValues = { unpack(self.db.sotfColor) }
-        ColorPickerFrame.func = function()
+        ColorPickerFrame.previousValues = {
+            r = red,
+            g = green,
+            b = blue,
+        }
+
+        local info = {}
+        info.swatchFunc = function()
             local r, g, b = ColorPickerFrame:GetColorRGB()
             self.db.sotfColor = { r, g, b }
             s:SetBackdropColor(r, g, b)
         end
-        ColorPickerFrame.cancelFunc = function()
-            local r, g, b = unpack(ColorPickerFrame.previousValues)
-            self.db.sotfColor = { r, g, b }
-            s:SetBackdropColor(r, g, b)
+        info.cancelFunc = function()
+            local prev = ColorPickerFrame.previousValues
+            self.db.sotfColor = { prev.r, prev.g, prev.b }
+            s:SetBackdropColor(prev.r, prev.g, prev.b)
         end
-        ColorPickerFrame:SetColorRGB(unpack(self.db.sotfColor))
-        ShowUIPanel(ColorPickerFrame)
+
+        info.r, info.g, info.b = unpack(self.db.sotfColor)
+
+        ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
 
     local sotf = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
@@ -113,5 +132,7 @@ function addon:Options()
         GameTooltip:Hide()
     end)
 
-    InterfaceOptions_AddCategory(panel, addonName)
+    local category = Settings.RegisterCanvasLayoutCategory(panel, addonName)
+    category.ID = addonName
+    Settings.RegisterAddOnCategory(category)
 end

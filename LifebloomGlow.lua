@@ -23,9 +23,11 @@ local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 local defaults = {
     throttle = 0.01,
     lb = true,
-    lbColor = { 0, 1, 0, 1 },
+    lbColor = { 0, 1, 0 },
     sotf = false,
-    sotfColor = { 0.66, 0, 1, 1 },
+    sotfColor = { 0.66, 0, 1 },
+    cenWard = true,
+    cenWardColor = { 1, 0.97, 0.67 },
     ver = 1,
 }
 
@@ -401,8 +403,7 @@ function addon:PLAYER_LOGIN()
             self:Print("Available commands:")
             self:Print("/lbg help - Show this help")
         else
-            InterfaceOptionsFrame_OpenToCategory(addonName)
-            InterfaceOptionsFrame_OpenToCategory(addonName)
+            Settings.OpenToCategory(addonName)
         end
     end
 
@@ -415,8 +416,7 @@ function addon:PLAYER_LOGIN()
             icon = "Interface\\AddOns\\LifebloomGlow\\media\\logo",
             notCheckable = true,
             func = function()
-                InterfaceOptionsFrame_OpenToCategory(addonName)
-                InterfaceOptionsFrame_OpenToCategory(addonName)
+                Settings.OpenToCategory(addonName)
             end,
         })
     end

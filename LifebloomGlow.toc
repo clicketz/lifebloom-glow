@@ -1,5 +1,5 @@
 ## Title: Lifebloom Glow
-## Interface: 100200
+## Interface: 110000
 ## Notes: Highlights Lifebloom When It Is Ready To Be Bloomed
 ## Author: clicket
 ## Version: @project-version@
