@@ -1,15 +1,7 @@
 local addonName, addon = ...
 
---[[----------------------------------------------------
-
-Options Table
-
-Specifically not using the new Blizzard options
-because of taint issues
-
-------------------------------------------------------]]
 function addon:Options()
-    local panel = CreateFrame("Frame", addonName .. "OptionsPanel", InterfaceOptionsFramePanelContainer)
+    local panel = CreateFrame("Frame", addonName .. "OptionsPanel")
     panel.name = addonName
     panel:Hide()
 
@@ -69,6 +61,16 @@ function addon:Options()
     glow:SetChecked(self.db.lb)
     glow:SetScript("OnClick", function(s)
         self.db.lb = s:GetChecked()
+        -- Force update immediately if unticked
+        if not self.db.lb then
+            if self.lbUpdate then self.lbUpdate:Hide() end
+            if self.lbAuras then
+                for buffFrame, _ in pairs(self.lbAuras) do
+                    if buffFrame.glow then buffFrame.glow:Hide() end
+                end
+                wipe(self.lbAuras)
+            end
+        end
     end)
     glow:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
@@ -78,61 +80,7 @@ function addon:Options()
         GameTooltip:Hide()
     end)
 
-    local sotfColor = CreateFrame("Button", nil, panel, "BackdropTemplate")
-    sotfColor:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -8)
-    sotfColor:SetSize(20, 20)
-    sotfColor:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 4,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 }
-    })
-
-    sotfColor:SetBackdropColor(unpack(self.db.sotfColor))
-    sotfColor:SetScript("OnClick", function(s)
-        local red, green, blue = unpack(self.db.sotfColor)
-        ColorPickerFrame.hasOpacity = false
-        ColorPickerFrame.previousValues = {
-            r = red,
-            g = green,
-            b = blue,
-        }
-
-        local info = {}
-        info.swatchFunc = function()
-            local r, g, b = ColorPickerFrame:GetColorRGB()
-            self.db.sotfColor = { r, g, b }
-            s:SetBackdropColor(r, g, b)
-        end
-        info.cancelFunc = function()
-            local prev = ColorPickerFrame.previousValues
-            self.db.sotfColor = { prev.r, prev.g, prev.b }
-            s:SetBackdropColor(prev.r, prev.g, prev.b)
-        end
-
-        info.r, info.g, info.b = unpack(self.db.sotfColor)
-
-        ColorPickerFrame:SetupColorPickerAndShow(info)
-    end)
-
-    local sotf = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
-    sotf:SetPoint("LEFT", sotfColor, "RIGHT", 8, 0)
-    sotf:SetHitRectInsets(0, -100, 0, 0)
-    sotf.text:SetText("Show Soul of the Forest Glow |cFFFF0000(BETA)|r")
-    sotf.tooltipText = "Enable a glow effect on buff frames when the buff is empowered by Soul of the Forest. This is in beta and likely has some quirks."
-    sotf:SetChecked(self.db.sotf)
-    sotf:SetScript("OnClick", function(s)
-        self:EnableSotf(s:GetChecked())
-    end)
-    sotf:SetScript("OnEnter", function(s)
-        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
-        GameTooltip:SetText(s.tooltipText, nil, nil, nil, nil, true)
-    end)
-    sotf:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-
     local category = Settings.RegisterCanvasLayoutCategory(panel, addonName)
-    category.ID = addonName
     Settings.RegisterAddOnCategory(category)
+    self.optionsCategoryID = category:GetID()
 end
