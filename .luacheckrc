@@ -55,4 +55,5 @@ globals = {
     "wipe",
     "AuraUtil",
     "Settings",
+    "issecretvalue",
 }
