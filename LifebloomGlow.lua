@@ -271,7 +271,11 @@ function addon:InitCommands()
             self:Print("Available commands:")
             self:Print("/lbg help - Show this help")
         else
-            Settings.OpenToCategory(self.optionsCategoryID)
+            if InCombatLockdown() then
+                self:Print("Cannot open options while in combat.")
+            else
+                Settings.OpenToCategory(self.optionsCategoryID)
+            end
         end
     end
 
@@ -281,7 +285,11 @@ function addon:InitCommands()
             icon = "Interface\\AddOns\\LifebloomGlow\\media\\logo",
             notCheckable = true,
             func = function()
-                Settings.OpenToCategory(self.optionsCategoryID)
+                if InCombatLockdown() then
+                    self:Print("Cannot open options while in combat.")
+                else
+                    Settings.OpenToCategory(self.optionsCategoryID)
+                end
             end,
         })
     end

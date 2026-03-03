@@ -6,7 +6,7 @@ exclude_files = {
 }
 ignore = {
     "11./SLASH_.*", -- slash handler
-    "212", -- unused argument
+    "212",          -- unused argument
 }
 read_globals = {
     -- WoW
@@ -56,4 +56,5 @@ globals = {
     "AuraUtil",
     "Settings",
     "issecretvalue",
+    "InCombatLockdown"
 }
