@@ -17,6 +17,7 @@ function addon:Options()
     version:SetPoint("TOPLEFT", author, "BOTTOMLEFT", 0, -8)
     version:SetFormattedText("|cFF50C878Version|r: %s", C_AddOns.GetAddOnMetadata(addonName, "Version"))
 
+    -- lifebloom settings
     local glowColor = CreateFrame("Button", nil, panel, "BackdropTemplate")
     glowColor:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -50)
     glowColor:SetSize(20, 20)
@@ -30,11 +31,7 @@ function addon:Options()
     glowColor:SetScript("OnClick", function(s)
         local red, green, blue = unpack(self.db.lbColor)
         ColorPickerFrame.hasOpacity = false
-        ColorPickerFrame.previousValues = {
-            r = red,
-            g = green,
-            b = blue,
-        }
+        ColorPickerFrame.previousValues = { r = red, g = green, b = blue }
 
         local info = {}
         info.swatchFunc = function()
@@ -49,7 +46,6 @@ function addon:Options()
         end
 
         info.r, info.g, info.b = unpack(self.db.lbColor)
-
         ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
 
@@ -77,6 +73,59 @@ function addon:Options()
         GameTooltip:SetText(s.tooltipText, nil, nil, nil, nil, true)
     end)
     glow:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    -- rejuv settings
+    local rejuvColorButton = CreateFrame("Button", nil, panel, "BackdropTemplate")
+    rejuvColorButton:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -16)
+    rejuvColorButton:SetSize(20, 20)
+    rejuvColorButton:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 4,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+    rejuvColorButton:SetBackdropColor(unpack(self.db.rejuvColor))
+    rejuvColorButton:SetScript("OnClick", function(s)
+        local red, green, blue = unpack(self.db.rejuvColor)
+        ColorPickerFrame.hasOpacity = false
+        ColorPickerFrame.previousValues = { r = red, g = green, b = blue }
+
+        local info = {}
+        info.swatchFunc = function()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            self.db.rejuvColor = { r, g, b }
+            s:SetBackdropColor(r, g, b)
+        end
+        info.cancelFunc = function()
+            local prev = ColorPickerFrame.previousValues
+            self.db.rejuvColor = { prev.r, prev.g, prev.b }
+            s:SetBackdropColor(prev.r, prev.g, prev.b)
+        end
+
+        info.r, info.g, info.b = unpack(self.db.rejuvColor)
+        ColorPickerFrame:SetupColorPickerAndShow(info)
+    end)
+
+    local rejuvGlow = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
+    rejuvGlow:SetPoint("LEFT", rejuvColorButton, "RIGHT", 8, 0)
+    rejuvGlow:SetHitRectInsets(0, -100, 0, 0)
+    rejuvGlow.text:SetText("Show Empowered Rejuvenation Glow")
+    rejuvGlow.tooltipText = "Enable a glow effect when Rejuvenation or Germination is empowered (e.g. via Soul of the Forest)."
+    rejuvGlow:SetChecked(self.db.rejuvGlow)
+    rejuvGlow:SetScript("OnClick", function(s)
+        self.db.rejuvGlow = s:GetChecked()
+        if not self.db.rejuvGlow then
+            if TargetFrame and TargetFrame.UpdateAuras then TargetFrame:UpdateAuras() end
+            if FocusFrame and FocusFrame.UpdateAuras then FocusFrame:UpdateAuras() end
+        end
+    end)
+    rejuvGlow:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+        GameTooltip:SetText(s.tooltipText, nil, nil, nil, nil, true)
+    end)
+    rejuvGlow:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
 

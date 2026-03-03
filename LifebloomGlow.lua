@@ -26,17 +26,27 @@ local issecretvalue = issecretvalue or function() return false end
 local defaults = {
     throttle = 0.01,
     lb = true,
+    rejuvGlow = true,
     lbColor = { 0, 1, 0 },
+    rejuvColor = { 0.83, 0, 1 },
     ver = 1,
 }
 
 ---------------------------
--- Lifebloom SpellIds
+-- Spells & Icons
 ---------------------------
 local lifeblooms = {
     [33763] = true,
     -- [188550] = true, -- Undergrowth (removed in midnight, keeping for hopium)
 }
+
+local rejuvSpells = {
+    [774] = true,    -- Rejuvenation
+    [155777] = true, -- Germination
+}
+
+local EMPOWERED_REJUV_ICON = 7195165
+local EMPOWERED_GERM_ICON = 1033486
 
 ---------------------------
 -- Event Handling
@@ -71,21 +81,22 @@ local function CreateGlowFrame(buffFrame)
     buffFrame.glow = glow
 end
 
--------------------------------------------------------
--- LB Decider
--- Note: Lifebloom has been added as a neversecret aura
+---------------------------
+-- Aura Evaluation
+-- Note: Lifebloom/Rejuv has been added as neversecret auras
 -- by Blizzard, but this is a temporary change and will
 -- likely be reverted in the future.
--------------------------------------------------------
-local function glowIfLB(aura, buffFrame)
+---------------------------
+local function EvaluateGlows(aura, buffFrame)
+    -- if this is a secret aura we don't care about it regardless
     if issecretvalue(aura.spellId) then
         buffFrame.glow:Hide()
         addon.lbAuras[buffFrame] = nil
         return
     end
 
-    if lifeblooms[aura.spellId] then
-        if aura.sourceUnit == "player" then
+    if aura.sourceUnit == "player" then
+        if lifeblooms[aura.spellId] and addon.db.lb then
             local expirationTime = aura.expirationTime or 0
             local duration = aura.duration or 0
             local now = GetTime()
@@ -98,7 +109,6 @@ local function glowIfLB(aura, buffFrame)
                 end
             else
                 local timeRemaining = expirationTime - now
-
                 local timeMod = aura.timeMod or 1
                 if timeMod <= 0 then timeMod = 1 end
 
@@ -122,6 +132,13 @@ local function glowIfLB(aura, buffFrame)
                     buffFrame.glow:Hide()
                 end
             end
+
+            return
+        elseif rejuvSpells[aura.spellId] and addon.db.rejuvGlow and (aura.icon == EMPOWERED_REJUV_ICON or aura.icon == EMPOWERED_GERM_ICON) then
+            buffFrame.glow:SetVertexColor(unpack(addon.db.rejuvColor))
+            buffFrame.glow:Show()
+            addon.lbAuras[buffFrame] = nil -- Clean up in case this frame used to be a lifebloom
+
             return
         end
     end
@@ -143,8 +160,8 @@ function addon:HandleAura(buffFrame, aura)
         return
     end
 
-    if self.db.lb then
-        glowIfLB(aura, buffFrame)
+    if self.db.lb or self.db.rejuvGlow then
+        EvaluateGlows(aura, buffFrame)
     else
         buffFrame.glow:Hide()
     end
