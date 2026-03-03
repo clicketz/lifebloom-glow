@@ -177,57 +177,10 @@ function addon:TargetFocus(root)
 end
 
 ---------------------------
--- Initialize
+-- Initializations
 ---------------------------
-function addon:PLAYER_LOGIN()
-    LifebloomGlowDB = LifebloomGlowDB or CopyTable(defaults)
 
-    local ver = LifebloomGlowDB.ver or 0
-    if ver < 1 then
-        LifebloomGlowDB = CopyTable(defaults)
-    else
-        for k in pairs(defaults) do
-            if LifebloomGlowDB[k] == nil then
-                LifebloomGlowDB = CopyTable(defaults)
-                break
-            end
-        end
-    end
-
-    self.db = LifebloomGlowDB
-    self.lbInstances = {}
-    self.lbAuras = {}
-    self.playerGUID = UnitGUID("player")
-    self.playerClass = select(2, UnitClass("player"))
-
-    self:Options()
-
-    SLASH_LIFEBLOOMGLOW1 = "/lbg"
-    function SlashCmdList.LIFEBLOOMGLOW(msg)
-        if msg == "help" then
-            self:Print("Available commands:")
-            self:Print("/lbg help - Show this help")
-        else
-            Settings.OpenToCategory(self.optionsCategoryID)
-        end
-    end
-
-    if AddonCompartmentFrame then
-        AddonCompartmentFrame:RegisterAddon({
-            text = "LifebloomGlow",
-            icon = "Interface\\AddOns\\LifebloomGlow\\media\\logo",
-            notCheckable = true,
-            func = function()
-                Settings.OpenToCategory(self.optionsCategoryID)
-            end,
-        })
-    end
-
-    if (self.playerClass ~= "DRUID") then
-        self:Print("Functionality disabled when not playing a |cffff7c0aDruid|r")
-        return
-    end
-
+function addon:InitHooks()
     hooksecurefunc("CompactUnitFrame_UtilSetBuff", function(s, ...)
         self:HandleAura(s, ...)
     end)
@@ -239,7 +192,9 @@ function addon:PLAYER_LOGIN()
     hooksecurefunc(FocusFrame, "UpdateAuras", function(s)
         self:TargetFocus(s)
     end)
+end
 
+function addon:InitLBLoop()
     self.lbUpdate = CreateFrame("Frame")
     local lastUpdate = 0
     self.lbUpdate:SetScript("OnUpdate", function(s, elapsed)
@@ -289,6 +244,66 @@ function addon:PLAYER_LOGIN()
         end
     end)
     self.lbUpdate:Hide()
+end
+
+function addon:InitDatabase()
+    LifebloomGlowDB = LifebloomGlowDB or CopyTable(defaults)
+
+    local ver = LifebloomGlowDB.ver or 0
+    if ver < 1 then
+        LifebloomGlowDB = CopyTable(defaults)
+    else
+        for k in pairs(defaults) do
+            if LifebloomGlowDB[k] == nil then
+                LifebloomGlowDB = CopyTable(defaults)
+                break
+            end
+        end
+    end
+
+    self.db = LifebloomGlowDB
+end
+
+function addon:InitCommands()
+    SLASH_LIFEBLOOMGLOW1 = "/lbg"
+    function SlashCmdList.LIFEBLOOMGLOW(msg)
+        if msg == "help" then
+            self:Print("Available commands:")
+            self:Print("/lbg help - Show this help")
+        else
+            Settings.OpenToCategory(self.optionsCategoryID)
+        end
+    end
+
+    if AddonCompartmentFrame then
+        AddonCompartmentFrame:RegisterAddon({
+            text = "LifebloomGlow",
+            icon = "Interface\\AddOns\\LifebloomGlow\\media\\logo",
+            notCheckable = true,
+            func = function()
+                Settings.OpenToCategory(self.optionsCategoryID)
+            end,
+        })
+    end
+end
+
+function addon:PLAYER_LOGIN()
+    self:InitDatabase()
+    self:Options()
+    self:InitCommands()
+
+    self.lbInstances = {}
+    self.lbAuras = {}
+    self.playerGUID = UnitGUID("player")
+    self.playerClass = select(2, UnitClass("player"))
+
+    if (self.playerClass ~= "DRUID") then
+        self:Print("Functionality disabled when not playing a |cffff7c0aDruid|r")
+        return
+    end
+
+    self:InitHooks()
+    self:InitLBLoop()
 
     self:Print("Loaded. Type |cFF50C878/lbg|r for options.")
 end
