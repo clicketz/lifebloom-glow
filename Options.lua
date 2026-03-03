@@ -116,10 +116,6 @@ function addon:Options()
     rejuvGlow:SetChecked(self.db.rejuvGlow)
     rejuvGlow:SetScript("OnClick", function(s)
         self.db.rejuvGlow = s:GetChecked()
-        if not self.db.rejuvGlow then
-            if TargetFrame and TargetFrame.UpdateAuras then TargetFrame:UpdateAuras() end
-            if FocusFrame and FocusFrame.UpdateAuras then FocusFrame:UpdateAuras() end
-        end
     end)
     rejuvGlow:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
