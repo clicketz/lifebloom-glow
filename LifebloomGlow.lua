@@ -45,8 +45,10 @@ local rejuvSpells = {
     [155777] = true, -- Germination
 }
 
-local EMPOWERED_REJUV_ICON = 7195165
-local EMPOWERED_GERM_ICON = 1033486
+local empoweredIcons = {
+    [7195165] = true, -- Rejuvenation
+    [1033486] = true, -- Germination
+}
 
 ---------------------------
 -- Event Handling
@@ -134,7 +136,7 @@ local function EvaluateGlows(aura, buffFrame)
             end
 
             return
-        elseif rejuvSpells[aura.spellId] and addon.db.rejuvGlow and (aura.icon == EMPOWERED_REJUV_ICON or aura.icon == EMPOWERED_GERM_ICON) then
+        elseif rejuvSpells[aura.spellId] and addon.db.rejuvGlow and empoweredIcons[aura.icon] then
             buffFrame.glow:SetVertexColor(unpack(addon.db.rejuvColor))
             buffFrame.glow:Show()
             addon.lbAuras[buffFrame] = nil -- Clean up in case this frame used to be a lifebloom
