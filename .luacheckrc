@@ -56,6 +56,6 @@ globals = {
     "AuraUtil",
     "Settings",
     "issecretvalue",
-    "InCombatLockdown"
+    "InCombatLockdown",
     "GetAddOnMetadata",
 }
