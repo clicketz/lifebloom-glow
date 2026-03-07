@@ -13,11 +13,11 @@ read_globals = {
     "LARGE_NUMBER_SEPERATOR",
 }
 globals = {
-    -- BuffOverlay
+    -- LifebloomGlow
     "LifebloomGlowDB",
 
     -- Other Addons
-    "GetAddOnMetadata",
+    "DandersFrames",
 
     -- Lua
     "_G",
@@ -57,4 +57,5 @@ globals = {
     "Settings",
     "issecretvalue",
     "InCombatLockdown"
+    "GetAddOnMetadata",
 }
