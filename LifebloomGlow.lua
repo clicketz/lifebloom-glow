@@ -75,20 +75,21 @@ local function CreateGlowFrame(buffFrame)
     glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
 
     local glow = glowFrame:CreateTexture(nil, "OVERLAY")
+    --glow:SetAtlas("spellbook-item-unassigned-glow")
     glow:SetAtlas("newplayertutorial-drag-slotgreen")
     glow:SetDesaturated(true)
     glow:SetAllPoints()
-    glow:SetTexCoord(.24, .76, .24, .76)
+    glow:SetTexCoord(.25, .75, .25, .75)
 
     buffFrame.glow = glow
 end
 
----------------------------
+---------------------------------------------------------------
 -- Aura Evaluation
 -- Note: Lifebloom/Rejuv has been added as neversecret auras
 -- by Blizzard, but this is a temporary change and will
 -- likely be reverted in the future.
----------------------------
+---------------------------------------------------------------
 local function EvaluateGlows(aura, buffFrame)
     -- if this is a secret aura we don't care about it regardless
     if issecretvalue(aura.spellId) then
@@ -186,14 +187,15 @@ function addon:InitHooks()
     hooksecurefunc("CompactUnitFrame_UtilSetBuff", function(s, ...)
         self:HandleAura(s, ...)
     end)
-
     hooksecurefunc(TargetFrame, "UpdateAuras", function(s)
         self:TargetFocus(s)
     end)
-
     hooksecurefunc(FocusFrame, "UpdateAuras", function(s)
         self:TargetFocus(s)
     end)
+
+    -- Workarounds for other addons. See Compatibility.lua
+    self:Compatibility()
 end
 
 function addon:InitLBLoop()

@@ -10,4 +10,5 @@
 ## SavedVariables: LifebloomGlowDB
 
 Options.lua
+Compatibility.lua
 LifebloomGlow.lua
