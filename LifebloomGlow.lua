@@ -29,6 +29,7 @@ local defaults = {
     rejuvGlow = true,
     lbColor = { 0, 1, 0 },
     rejuvColor = { 0.83, 0, 1 },
+    glowPadding = 0,
     ver = 1,
 }
 
@@ -78,8 +79,11 @@ local function CreateGlowFrame(buffFrame)
     --glow:SetAtlas("spellbook-item-unassigned-glow")
     glow:SetAtlas("newplayertutorial-drag-slotgreen")
     glow:SetDesaturated(true)
-    glow:SetAllPoints()
     glow:SetTexCoord(.25, .75, .25, .75)
+
+    local padding = addon.db.glowPadding
+    glow:SetPoint("TOPLEFT", -padding, padding)
+    glow:SetPoint("BOTTOMRIGHT", padding, -padding)
 
     buffFrame.glow = glow
 end
