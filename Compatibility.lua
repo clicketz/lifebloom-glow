@@ -15,11 +15,9 @@ function addon:DandersFrames()
             local buffFrame = frame.buffIcons[i]
 
             if buffFrame:IsShown() and buffFrame.auraData then
-                -- This field is needed so we don't instantly hide the glow
                 buffFrame.auraInstanceID = buffFrame.auraData.auraInstanceID
 
-                local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, buffFrame.auraInstanceID)
-                self:HandleAura(buffFrame, aura)
+                self:HandleAura(buffFrame, buffFrame.auraData)
             else
                 buffFrame.auraInstanceID = nil
                 self:HandleAura(buffFrame, nil)
