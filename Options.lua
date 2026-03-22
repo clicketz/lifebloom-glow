@@ -38,11 +38,13 @@ function addon:Options()
             local r, g, b = ColorPickerFrame:GetColorRGB()
             self.db.lbColor = { r, g, b }
             s:SetBackdropColor(r, g, b)
+            self:UpdateColorCache()
         end
         info.cancelFunc = function()
             local prev = ColorPickerFrame.previousValues
             self.db.lbColor = { prev.r, prev.g, prev.b }
             s:SetBackdropColor(prev.r, prev.g, prev.b)
+            self:UpdateColorCache()
         end
 
         info.r, info.g, info.b = unpack(self.db.lbColor)

@@ -127,13 +127,14 @@ local function EvaluateGlows(aura, buffFrame)
                 buffFrame._safeAura.duration = duration
                 buffFrame._safeAura.timeMod = timeMod
                 buffFrame._safeAura.auraInstanceID = aura.auraInstanceID
+                buffFrame._safeAura.refreshTime = refreshTime
 
                 addon.lbAuras[buffFrame] = buffFrame._safeAura
                 addon.lbInstances[aura.auraInstanceID] = true
                 addon.lbUpdate:Show()
 
                 if timeRemaining <= refreshTime then
-                    buffFrame.glow:SetVertexColor(unpack(addon.db.lbColor))
+                    buffFrame.glow:SetVertexColor(addon.cachedLbR, addon.cachedLbG, addon.cachedLbB)
                     buffFrame.glow:Show()
                 else
                     buffFrame.glow:Hide()
@@ -142,7 +143,7 @@ local function EvaluateGlows(aura, buffFrame)
 
             return
         elseif rejuvSpells[aura.spellId] and addon.db.rejuvGlow and empoweredIcons[aura.icon] then
-            buffFrame.glow:SetVertexColor(unpack(addon.db.rejuvColor))
+            buffFrame.glow:SetVertexColor(addon.cachedRejuvR, addon.cachedRejuvG, addon.cachedRejuvB)
             buffFrame.glow:Show()
             addon.lbAuras[buffFrame] = nil -- Clean up in case this frame used to be a lifebloom
 
@@ -184,6 +185,19 @@ function addon:TargetFocus(root)
 end
 
 ---------------------------
+-- Helpers
+---------------------------
+function addon:UpdateColorCache()
+    self.cachedLbR = self.db.lbColor[1]
+    self.cachedLbG = self.db.lbColor[2]
+    self.cachedLbB = self.db.lbColor[3]
+
+    self.cachedRejuvR = self.db.rejuvColor[1]
+    self.cachedRejuvG = self.db.rejuvColor[2]
+    self.cachedRejuvB = self.db.rejuvColor[3]
+end
+
+---------------------------
 -- Initializations
 ---------------------------
 
@@ -205,6 +219,7 @@ end
 function addon:InitLBLoop()
     self.lbUpdate = CreateFrame("Frame")
     local lastUpdate = 0
+
     self.lbUpdate:SetScript("OnUpdate", function(s, elapsed)
         if not self.db.lb then
             s:Hide()
@@ -220,13 +235,13 @@ function addon:InitLBLoop()
                 return
             end
 
+            local now = GetTime()
+
             for buffFrame, aura in pairs(self.lbAuras) do
                 if buffFrame.auraInstanceID ~= aura.auraInstanceID then
                     buffFrame.glow:Hide()
                     self.lbAuras[buffFrame] = nil
                 else
-                    local now = GetTime()
-
                     if aura.expirationTime < now then
                         buffFrame.glow:Hide()
                         self.lbAuras[buffFrame] = nil
@@ -235,10 +250,9 @@ function addon:InitLBLoop()
                         end
                     elseif self.lbInstances[aura.auraInstanceID] then
                         local timeRemaining = (aura.expirationTime - now) / aura.timeMod
-                        local refreshTime = aura.duration * 0.3
 
-                        if (timeRemaining <= refreshTime) then
-                            buffFrame.glow:SetVertexColor(unpack(self.db.lbColor))
+                        if (timeRemaining <= aura.refreshTime) then
+                            buffFrame.glow:SetVertexColor(self.cachedLbR, self.cachedLbG, self.cachedLbB)
                             buffFrame.glow:Show()
                         else
                             buffFrame.glow:Hide()
@@ -305,6 +319,7 @@ end
 
 function addon:PLAYER_LOGIN()
     self:InitDatabase()
+    self:UpdateColorCache()
     self:Options()
     self:InitCommands()
 
