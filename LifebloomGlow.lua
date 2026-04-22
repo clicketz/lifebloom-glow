@@ -4,7 +4,6 @@ local _, addon = ...
 -- Lua Upvalues
 ---------------------------
 local pairs = pairs
-local unpack = unpack
 local next = next
 local select = select
 
