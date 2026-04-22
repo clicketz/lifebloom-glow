@@ -22,6 +22,7 @@ globals = {
     -- Lua
     "_G",
     "difftime",
+    "unpack",
 
     -- WoW
     "AddonCompartmentFrame",
@@ -48,6 +49,7 @@ globals = {
     "ColorPickerFrame",
     "GameTooltip",
     "ShowUIPanel",
+    "UnitExists",
     "UnitGUID",
     "UnitIsFriend",
     "CombatLogGetCurrentEventInfo",
