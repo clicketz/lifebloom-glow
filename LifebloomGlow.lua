@@ -5,18 +5,14 @@ local _, addon = ...
 ---------------------------
 local pairs = pairs
 local next = next
-local select = select
 
 ---------------------------
 -- WoW API Upvalues
 ---------------------------
-local CopyTable = CopyTable
 local GetTime = GetTime
-local UnitClass = UnitClass
-local CreateFrame = CreateFrame
-local UnitGUID = UnitGUID
 local UnitExists = UnitExists
-local C_UnitAuras = C_UnitAuras
+local GetUnitAuraBySpellID = C_UnitAuras.GetUnitAuraBySpellID
+local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
 -- Fallback for <12.0 where secret values don't exist
 local issecretvalue = issecretvalue or function() return false end
 
@@ -181,7 +177,7 @@ end
 ---------------------------
 function addon:TargetFocus(root)
     for buffFrame in root.auraPools:EnumerateActive() do
-        self:HandleAura(buffFrame, C_UnitAuras.GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID))
+        self:HandleAura(buffFrame, GetAuraDataByAuraInstanceID(root.unit, buffFrame.auraInstanceID))
     end
 end
 
@@ -195,9 +191,41 @@ function addon:ClearCUFGlows(frame)
     end
 end
 
+function addon:TrackCUF(frame)
+    if not frame or frame:IsForbidden() then return end
+    self.cufPool[frame] = true
+
+    local unit = frame.unit
+    local displayedUnit = frame.displayedUnit
+
+    if frame._lbgUnit ~= unit then
+        if frame._lbgUnit and self.unitCUFs[frame._lbgUnit] then
+            self.unitCUFs[frame._lbgUnit][frame] = nil
+        end
+        frame._lbgUnit = unit
+        if unit then
+            self.unitCUFs[unit] = self.unitCUFs[unit] or {}
+            self.unitCUFs[unit][frame] = true
+        end
+    end
+
+    if frame._lbgDisplayedUnit ~= displayedUnit then
+        if frame._lbgDisplayedUnit and self.unitCUFs[frame._lbgDisplayedUnit] then
+            self.unitCUFs[frame._lbgDisplayedUnit][frame] = nil
+        end
+        frame._lbgDisplayedUnit = displayedUnit
+        if displayedUnit then
+            self.unitCUFs[displayedUnit] = self.unitCUFs[displayedUnit] or {}
+            self.unitCUFs[displayedUnit][frame] = true
+        end
+    end
+
+    self:UpdateCUF(frame)
+end
+
 function addon:UpdateCUF(frame)
-    local unit = frame.displayedUnit or frame.unit
-    if not unit or not UnitExists(unit) or not self.db.glowFrameInstead then
+    local searchUnit = frame.displayedUnit or frame.unit
+    if not searchUnit or not UnitExists(searchUnit) or not self.db.glowFrameInstead then
         self:ClearCUFGlows(frame)
         return
     end
@@ -206,8 +234,8 @@ function addon:UpdateCUF(frame)
 
     if self.db.lb then
         for spellId in pairs(lifeblooms) do
-            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "PLAYER|HELPFUL")
-            if aura and not issecretvalue(aura.spellId) then
+            local aura = GetUnitAuraBySpellID(searchUnit, spellId, "PLAYER|HELPFUL")
+            if aura then
                 foundAura = aura
                 break
             end
@@ -223,9 +251,9 @@ function addon:UpdateCUF(frame)
 end
 
 function addon:UNIT_AURA(unit)
-    if not self.cufPool then return end
-    for cuf in pairs(self.cufPool) do
-        if cuf:IsVisible() and (cuf.unit == unit or cuf.displayedUnit == unit) then
+    if not self.unitCUFs or not self.unitCUFs[unit] then return end
+    for cuf in pairs(self.unitCUFs[unit]) do
+        if cuf:IsVisible() then
             self:UpdateCUF(cuf)
         end
     end
@@ -235,7 +263,7 @@ function addon:GROUP_ROSTER_UPDATE()
     if not self.cufPool then return end
     for cuf in pairs(self.cufPool) do
         if cuf:IsVisible() then
-            self:UpdateCUF(cuf)
+            self:TrackCUF(cuf)
         end
     end
 end
@@ -259,12 +287,10 @@ end
 
 function addon:InitHooks()
     self.cufPool = {}
+    self.unitCUFs = {}
 
     hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-        if not frame:IsForbidden() then
-            self.cufPool[frame] = true
-            self:UpdateCUF(frame)
-        end
+        self:TrackCUF(frame)
     end)
 
     eventFrame:RegisterEvent("UNIT_AURA")
