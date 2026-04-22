@@ -102,9 +102,15 @@ function addon:Options()
         GameTooltip:Hide()
     end)
 
+    local notes = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    notes:SetPoint("TOPLEFT", glowFrameInstead, "BOTTOMLEFT", 4, -4)
+    notes:SetWidth(500)
+    notes:SetJustifyH("LEFT")
+    notes:SetText("|cffa8a8a8Note: Due to recent Blizzard UI restrictions introduced in 12.0.5, buff/debuff icons on CompactUnitFrames can no longer be changed/edited in any way. This includes adding glow borders. 'Glow Party/Raid Frames' setting is not ideal, but is the best workaround available at this time. Target and Focus frames remain unaffected, for now..|r")
+
     -- rejuv settings
     local rejuvColorButton = CreateFrame("Button", nil, panel, "BackdropTemplate")
-    rejuvColorButton:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -50)
+    rejuvColorButton:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -85)
     rejuvColorButton:SetSize(20, 20)
     rejuvColorButton:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
