@@ -203,16 +203,23 @@ function addon:UpdateCUF(frame)
     end
 
     local foundAura = nil
-    for i = 1, 40 do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
 
-        if aura.sourceUnit == "player" then
-            if lifeblooms[aura.spellId] and self.db.lb then
+    if self.db.lb then
+        for spellId in pairs(lifeblooms) do
+            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "PLAYER|HELPFUL")
+            if aura and not issecretvalue(aura.spellId) then
                 foundAura = aura
                 break
-            elseif rejuvSpells[aura.spellId] and self.db.rejuvGlow and empoweredIcons[aura.icon] then
-                if not foundAura then foundAura = aura end
+            end
+        end
+    end
+
+    if not foundAura and self.db.rejuvGlow then
+        for spellId in pairs(rejuvSpells) do
+            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "PLAYER|HELPFUL")
+            if aura and not issecretvalue(aura.spellId) and empoweredIcons[aura.icon] then
+                foundAura = aura
+                break
             end
         end
     end
