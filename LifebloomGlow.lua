@@ -16,6 +16,7 @@ local GetTime = GetTime
 local UnitClass = UnitClass
 local CreateFrame = CreateFrame
 local UnitGUID = UnitGUID
+local UnitExists = UnitExists
 local C_UnitAuras = C_UnitAuras
 -- Fallback for <12.0 where secret values don't exist
 local issecretvalue = issecretvalue or function() return false end
@@ -27,6 +28,7 @@ local defaults = {
     throttle = 0.01,
     lb = true,
     rejuvGlow = true,
+    glowFrameInstead = true,
     lbColor = { 0, 1, 0 },
     rejuvColor = { 0.83, 0, 1 },
     glowPadding = 0,
@@ -184,6 +186,64 @@ function addon:TargetFocus(root)
     end
 end
 
+----------------------
+-- CompactUnitFrame
+----------------------
+function addon:ClearCUFGlows(frame)
+    if frame.glow then
+        frame.auraInstanceID = nil
+        self:HandleAura(frame, nil)
+    end
+end
+
+function addon:UpdateCUF(frame)
+    local unit = frame.displayedUnit or frame.unit
+    if not unit or not UnitExists(unit) or not self.db.glowFrameInstead then
+        self:ClearCUFGlows(frame)
+        return
+    end
+
+    local foundAura = nil
+    for i = 1, 40 do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+        if not aura then break end
+
+        if aura.sourceUnit == "player" then
+            if lifeblooms[aura.spellId] and self.db.lb then
+                foundAura = aura
+                break
+            elseif rejuvSpells[aura.spellId] and self.db.rejuvGlow and empoweredIcons[aura.icon] then
+                if not foundAura then foundAura = aura end
+            end
+        end
+    end
+
+    if foundAura then
+        frame.auraInstanceID = foundAura.auraInstanceID
+        self:HandleAura(frame, foundAura)
+    else
+        self:ClearCUFGlows(frame)
+    end
+end
+
+function addon:UNIT_AURA(unit)
+    if not self.cufPool then return end
+    for cuf in pairs(self.cufPool) do
+        if cuf:IsVisible() and (cuf.unit == unit or cuf.displayedUnit == unit) then
+            self:UpdateCUF(cuf)
+        end
+    end
+end
+
+function addon:GROUP_ROSTER_UPDATE()
+    if not self.cufPool then return end
+    for cuf in pairs(self.cufPool) do
+        if cuf:IsVisible() then
+            self:UpdateCUF(cuf)
+        end
+    end
+end
+
 ---------------------------
 -- Helpers
 ---------------------------
@@ -202,9 +262,18 @@ end
 ---------------------------
 
 function addon:InitHooks()
-    hooksecurefunc("CompactUnitFrame_UtilSetBuff", function(s, ...)
-        self:HandleAura(s, ...)
+    self.cufPool = {}
+
+    hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
+        if not frame:IsForbidden() then
+            self.cufPool[frame] = true
+            self:UpdateCUF(frame)
+        end
     end)
+
+    eventFrame:RegisterEvent("UNIT_AURA")
+    eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+
     hooksecurefunc(TargetFrame, "UpdateAuras", function(s)
         self:TargetFocus(s)
     end)

@@ -78,9 +78,33 @@ function addon:Options()
         GameTooltip:Hide()
     end)
 
+    local glowFrameInstead = CreateFrame("CheckButton", nil, panel, "InterfaceOptionsCheckButtonTemplate")
+    glowFrameInstead:SetPoint("TOPLEFT", glow, "BOTTOMLEFT", 0, -8)
+    glowFrameInstead:SetHitRectInsets(0, -100, 0, 0)
+    glowFrameInstead.text:SetText("Glow Party/Raid Frames")
+    glowFrameInstead.tooltipText = "Apply the glow to the entire frame for Party and Raid frames. If disabled, Party/Raid frames will not glow."
+    glowFrameInstead:SetChecked(self.db.glowFrameInstead)
+    glowFrameInstead:SetScript("OnClick", function(s)
+        self.db.glowFrameInstead = s:GetChecked()
+        if self.cufPool then
+            for cuf in pairs(self.cufPool) do
+                if cuf:IsVisible() then
+                    self:UpdateCUF(cuf)
+                end
+            end
+        end
+    end)
+    glowFrameInstead:SetScript("OnEnter", function(s)
+        GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+        GameTooltip:SetText(s.tooltipText, nil, nil, nil, nil, true)
+    end)
+    glowFrameInstead:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
     -- rejuv settings
     local rejuvColorButton = CreateFrame("Button", nil, panel, "BackdropTemplate")
-    rejuvColorButton:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -16)
+    rejuvColorButton:SetPoint("TOPLEFT", glowColor, "BOTTOMLEFT", 0, -50)
     rejuvColorButton:SetSize(20, 20)
     rejuvColorButton:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -99,11 +123,13 @@ function addon:Options()
             local r, g, b = ColorPickerFrame:GetColorRGB()
             self.db.rejuvColor = { r, g, b }
             s:SetBackdropColor(r, g, b)
+            self:UpdateColorCache()
         end
         info.cancelFunc = function()
             local prev = ColorPickerFrame.previousValues
             self.db.rejuvColor = { prev.r, prev.g, prev.b }
             s:SetBackdropColor(prev.r, prev.g, prev.b)
+            self:UpdateColorCache()
         end
 
         info.r, info.g, info.b = unpack(self.db.rejuvColor)
