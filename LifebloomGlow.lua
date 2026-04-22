@@ -214,16 +214,6 @@ function addon:UpdateCUF(frame)
         end
     end
 
-    if not foundAura and self.db.rejuvGlow then
-        for spellId in pairs(rejuvSpells) do
-            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "PLAYER|HELPFUL")
-            if aura and not issecretvalue(aura.spellId) and empoweredIcons[aura.icon] then
-                foundAura = aura
-                break
-            end
-        end
-    end
-
     if foundAura then
         frame.auraInstanceID = foundAura.auraInstanceID
         self:HandleAura(frame, foundAura)
