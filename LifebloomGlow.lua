@@ -290,7 +290,10 @@ function addon:InitHooks()
     self.unitCUFs = {}
 
     hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-        self:TrackCUF(frame)
+        local frameName = frame:GetName()
+        if frameName and frameName:match("^Compact") then
+            self:TrackCUF(frame)
+        end
     end)
 
     eventFrame:RegisterEvent("UNIT_AURA")
