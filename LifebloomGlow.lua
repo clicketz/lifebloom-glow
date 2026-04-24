@@ -36,7 +36,8 @@ local defaults = {
 ---------------------------
 local lifeblooms = {
     [33763] = true,
-    -- [ 188550 ] = true, -- Undergrowth (removed in midnight, keeping for hopium)
+    [290754] = true, -- Early Spring (pvp talent) NOT added as neversecret by blizzard, but it should be
+    -- [188550] = true, -- Undergrowth (removed in midnight, keeping for hopium)
 }
 
 local rejuvSpells = {
