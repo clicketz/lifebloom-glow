@@ -192,6 +192,23 @@ function addon:ClearCUFGlows(frame)
     end
 end
 
+function addon:UntrackCUF(frame)
+    self.cufPool[frame] = nil
+
+    if frame._lbgUnit and self.unitCUFs[frame._lbgUnit] then
+        self.unitCUFs[frame._lbgUnit][frame] = nil
+    end
+
+    if frame._lbgDisplayedUnit and self.unitCUFs[frame._lbgDisplayedUnit] then
+        self.unitCUFs[frame._lbgDisplayedUnit][frame] = nil
+    end
+
+    frame._lbgUnit = nil
+    frame._lbgDisplayedUnit = nil
+
+    self:ClearCUFGlows(frame)
+end
+
 function addon:TrackCUF(frame)
     if not frame or frame:IsForbidden() then return end
     self.cufPool[frame] = true
@@ -299,11 +316,16 @@ function addon:InitHooks()
     self.unitCUFs = {}
 
     hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-        if not frame or frame:IsForbidden() then return end
+        if frame:IsForbidden() then
+            self:UntrackCUF(frame)
+            return
+        end
 
         local frameName = frame:GetName()
         if frameName and strmatch(frameName, "^Compact") then
             self:TrackCUF(frame)
+        else
+            self:UntrackCUF(frame)
         end
     end)
 
