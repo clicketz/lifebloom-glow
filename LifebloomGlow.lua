@@ -5,6 +5,7 @@ local _, addon = ...
 ---------------------------
 local pairs = pairs
 local next = next
+local strmatch = string.match
 
 ---------------------------
 -- WoW API Upvalues
@@ -173,7 +174,7 @@ function addon:HandleAura(buffFrame, aura)
 end
 
 ---------------------------
--- Target/Focus Frame Core
+-- Target/Focus Frames
 ---------------------------
 function addon:TargetFocus(root)
     for buffFrame in root.auraPools:EnumerateActive() do
@@ -225,7 +226,13 @@ end
 
 function addon:UpdateCUF(frame)
     local searchUnit = frame.displayedUnit or frame.unit
+
     if not searchUnit or not UnitExists(searchUnit) or not self.db.glowFrameInstead then
+        self:ClearCUFGlows(frame)
+        return
+    end
+
+    if strmatch(searchUnit, "target") then
         self:ClearCUFGlows(frame)
         return
     end
