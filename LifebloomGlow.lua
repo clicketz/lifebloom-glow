@@ -109,9 +109,6 @@ local function EvaluateGlows(aura, buffFrame)
             if expirationTime < now then
                 buffFrame.glow:Hide()
                 addon.lbAuras[buffFrame] = nil
-                if aura.auraInstanceID then
-                    addon.lbInstances[aura.auraInstanceID] = nil
-                end
             else
                 local timeRemaining = expirationTime - now
                 local timeMod = aura.timeMod or 1
@@ -128,7 +125,6 @@ local function EvaluateGlows(aura, buffFrame)
                 buffFrame._safeAura.refreshTime = refreshTime
 
                 addon.lbAuras[buffFrame] = buffFrame._safeAura
-                addon.lbInstances[aura.auraInstanceID] = true
                 addon.lbUpdate:Show()
 
                 if timeRemaining <= refreshTime then
@@ -210,7 +206,6 @@ function addon:UntrackCUF(frame)
 end
 
 function addon:TrackCUF(frame)
-    if not frame or frame:IsForbidden() then return end
     self.cufPool[frame] = true
 
     local unit = frame.unit
@@ -242,8 +237,6 @@ function addon:TrackCUF(frame)
 end
 
 function addon:UpdateCUF(frame)
-    if frame:IsForbidden() then return end
-
     local searchUnit = frame.displayedUnit or frame.unit
 
     if not searchUnit or not UnitExists(searchUnit) or not self.db.glowFrameInstead then
@@ -372,10 +365,7 @@ function addon:InitLBLoop()
                     if aura.expirationTime < now then
                         buffFrame.glow:Hide()
                         self.lbAuras[buffFrame] = nil
-                        if aura.auraInstanceID then
-                            self.lbInstances[aura.auraInstanceID] = nil
-                        end
-                    elseif self.lbInstances[aura.auraInstanceID] then
+                    else
                         local timeRemaining = (aura.expirationTime - now) / aura.timeMod
 
                         if (timeRemaining <= aura.refreshTime) then
@@ -384,9 +374,6 @@ function addon:InitLBLoop()
                         else
                             buffFrame.glow:Hide()
                         end
-                    else
-                        buffFrame.glow:Hide()
-                        self.lbAuras[buffFrame] = nil
                     end
                 end
             end
@@ -450,7 +437,6 @@ function addon:PLAYER_LOGIN()
     self:Options()
     self:InitCommands()
 
-    self.lbInstances = {}
     self.lbAuras = {}
     self.playerGUID = UnitGUID("player")
     self.playerClass = select(2, UnitClass("player"))
