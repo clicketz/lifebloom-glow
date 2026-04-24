@@ -36,7 +36,7 @@ local defaults = {
 ---------------------------
 local lifeblooms = {
     [33763] = true,
-    -- [188550] = true, -- Undergrowth (removed in midnight, keeping for hopium)
+    -- [ 188550 ] = true, -- Undergrowth (removed in midnight, keeping for hopium)
 }
 
 local rejuvSpells = {
@@ -297,8 +297,10 @@ function addon:InitHooks()
     self.unitCUFs = {}
 
     hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
+        if not frame or frame:IsForbidden() then return end
+
         local frameName = frame:GetName()
-        if frameName and frameName:match("^Compact") then
+        if frameName and strmatch(frameName, "^Compact") then
             self:TrackCUF(frame)
         end
     end)
