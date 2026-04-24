@@ -225,6 +225,8 @@ function addon:TrackCUF(frame)
 end
 
 function addon:UpdateCUF(frame)
+    if frame:IsForbidden() then return end
+
     local searchUnit = frame.displayedUnit or frame.unit
 
     if not searchUnit or not UnitExists(searchUnit) or not self.db.glowFrameInstead then
