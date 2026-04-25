@@ -273,18 +273,14 @@ end
 function addon:UNIT_AURA(unit)
     if not self.unitCUFs or not self.unitCUFs[unit] then return end
     for cuf in pairs(self.unitCUFs[unit]) do
-        if cuf:IsVisible() then
-            self:UpdateCUF(cuf)
-        end
+        self:UpdateCUF(cuf)
     end
 end
 
 function addon:GROUP_ROSTER_UPDATE()
     if not self.cufPool then return end
     for cuf in pairs(self.cufPool) do
-        if cuf:IsVisible() then
-            self:TrackCUF(cuf)
-        end
+        self:TrackCUF(cuf)
     end
 end
 
