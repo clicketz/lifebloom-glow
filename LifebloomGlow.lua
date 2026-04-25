@@ -192,11 +192,11 @@ end
 function addon:UntrackCUF(frame)
     self.cufPool[frame] = nil
 
-    if frame._lbgUnit and self.unitCUFs[frame._lbgUnit] then
+    if frame._lbgUnit then
         self.unitCUFs[frame._lbgUnit][frame] = nil
     end
 
-    if frame._lbgDisplayedUnit and self.unitCUFs[frame._lbgDisplayedUnit] then
+    if frame._lbgDisplayedUnit then
         self.unitCUFs[frame._lbgDisplayedUnit][frame] = nil
     end
 
@@ -213,7 +213,7 @@ function addon:TrackCUF(frame)
     local displayedUnit = frame.displayedUnit
 
     if frame._lbgUnit ~= unit then
-        if frame._lbgUnit and self.unitCUFs[frame._lbgUnit] then
+        if frame._lbgUnit then
             self.unitCUFs[frame._lbgUnit][frame] = nil
         end
         frame._lbgUnit = unit
@@ -224,7 +224,7 @@ function addon:TrackCUF(frame)
     end
 
     if frame._lbgDisplayedUnit ~= displayedUnit then
-        if frame._lbgDisplayedUnit and self.unitCUFs[frame._lbgDisplayedUnit] then
+        if frame._lbgDisplayedUnit then
             self.unitCUFs[frame._lbgDisplayedUnit][frame] = nil
         end
         frame._lbgDisplayedUnit = displayedUnit
@@ -257,7 +257,7 @@ function addon:UpdateCUF(frame)
             local aura = GetAuraDataByIndex(searchUnit, i, "PLAYER|HELPFUL")
             if not aura then break end
 
-            if lifeblooms[aura.spellId] then
+            if not issecretvalue(aura.spellId) and lifeblooms[aura.spellId] then
                 foundAura = aura
                 break
             end
@@ -272,15 +272,62 @@ function addon:UpdateCUF(frame)
     end
 end
 
-function addon:UNIT_AURA(unit)
-    if not self.unitCUFs or not self.unitCUFs[unit] then return end
-    for cuf in pairs(self.unitCUFs[unit]) do
-        self:UpdateCUF(cuf)
+function addon:UNIT_AURA(unitTarget, updateInfo)
+    if not self.unitCUFs[unitTarget] then return end
+
+    local needsUpdate = false
+
+    if updateInfo then
+        if updateInfo.isFullUpdate then
+            needsUpdate = true
+        else
+            if updateInfo.addedAuras then
+                for _, aura in pairs(updateInfo.addedAuras) do
+                    if not issecretvalue(aura.spellId) and not issecretvalue(aura.sourceUnit) then
+                        if aura.sourceUnit == "player" and (lifeblooms[aura.spellId] or (self.db.rejuvGlow and rejuvSpells[aura.spellId])) then
+                            needsUpdate = true
+                            break
+                        end
+                    end
+                end
+            end
+
+            if not needsUpdate and updateInfo.updatedAuraInstanceIDs then
+                for _, auraInstanceID in pairs(updateInfo.updatedAuraInstanceIDs) do
+                    local aura = GetAuraDataByAuraInstanceID(unitTarget, auraInstanceID)
+                    if aura and not issecretvalue(aura.spellId) and not issecretvalue(aura.sourceUnit) then
+                        if aura.sourceUnit == "player" and (lifeblooms[aura.spellId] or (self.db.rejuvGlow and rejuvSpells[aura.spellId])) then
+                            needsUpdate = true
+                            break
+                        end
+                    end
+                end
+            end
+
+            if not needsUpdate and updateInfo.removedAuraInstanceIDs then
+                for _, auraInstanceID in pairs(updateInfo.removedAuraInstanceIDs) do
+                    for cuf in pairs(self.unitCUFs[unitTarget]) do
+                        if cuf.auraInstanceID == auraInstanceID then
+                            needsUpdate = true
+                            break
+                        end
+                    end
+                    if needsUpdate then break end
+                end
+            end
+        end
+    else
+        needsUpdate = true
+    end
+
+    if needsUpdate then
+        for cuf in pairs(self.unitCUFs[unitTarget]) do
+            self:UpdateCUF(cuf)
+        end
     end
 end
 
 function addon:GROUP_ROSTER_UPDATE()
-    if not self.cufPool then return end
     for cuf in pairs(self.cufPool) do
         self:TrackCUF(cuf)
     end
