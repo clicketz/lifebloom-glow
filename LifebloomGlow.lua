@@ -12,7 +12,7 @@ local strmatch = string.match
 ---------------------------
 local GetTime = GetTime
 local UnitExists = UnitExists
-local GetUnitAuraBySpellID = C_UnitAuras.GetUnitAuraBySpellID
+local GetAuraDataByIndex = C_UnitAuras.GetAuraDataByIndex
 local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
 -- Fallback for <12.0 where secret values don't exist
 local issecretvalue = issecretvalue or function() return false end
@@ -253,9 +253,11 @@ function addon:UpdateCUF(frame)
     local foundAura = nil
 
     if self.db.lb then
-        for spellId in pairs(lifeblooms) do
-            local aura = GetUnitAuraBySpellID(searchUnit, spellId, "PLAYER|HELPFUL")
-            if aura then
+        for i = 1, 255 do
+            local aura = GetAuraDataByIndex(searchUnit, i, "PLAYER|HELPFUL")
+            if not aura then break end
+
+            if lifeblooms[aura.spellId] then
                 foundAura = aura
                 break
             end
