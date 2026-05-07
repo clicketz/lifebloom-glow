@@ -27,7 +27,7 @@ local defaults = {
     glowFrameInstead = true,
     lbColor = { 0, 1, 0 },
     rejuvColor = { 0.83, 0, 1 },
-    glowPadding = 0,
+    glowMult = 1.0,
     ver = 1,
 }
 
@@ -69,22 +69,73 @@ end
 ---------------------------
 -- Glow Frame Func
 ---------------------------
+function addon:UpdateGlowLayout(buffFrame)
+    if not buffFrame.glow or not buffFrame.glowFrame then return end
+
+    local userMult = self.db.glowMult or 1.0
+    local baseMult = addon.cufPool[buffFrame] and 1.0 or 2.0
+    local mult = userMult * baseMult
+
+    local w, h = buffFrame:GetSize()
+
+    if w == 0 then w = 20 end
+    if h == 0 then h = 20 end
+
+    local widthOffset = (w * mult - w) / 2
+    local heightOffset = (h * mult - h) / 2
+
+    local glow = buffFrame.glow
+    glow:ClearAllPoints()
+
+    if widthOffset == 0 and heightOffset == 0 then
+        glow:SetAllPoints(buffFrame.glowFrame)
+    else
+        glow:SetPoint("TOPLEFT", buffFrame.glowFrame, "TOPLEFT", -widthOffset, heightOffset)
+        glow:SetPoint("BOTTOMRIGHT", buffFrame.glowFrame, "BOTTOMRIGHT", widthOffset, -heightOffset)
+    end
+end
+
+function addon:UpdateAllGlowLayouts()
+    for cuf in pairs(self.cufPool) do
+        if cuf.glow then
+            self:UpdateGlowLayout(cuf)
+        end
+    end
+
+    local function UpdatePool(frame)
+        if frame and frame.auraPools then
+            for buffFrame in frame.auraPools:EnumerateActive() do
+                if buffFrame.glow then
+                    self:UpdateGlowLayout(buffFrame)
+                end
+            end
+        end
+    end
+
+    UpdatePool(TargetFrame)
+    UpdatePool(FocusFrame)
+end
+
 local function CreateGlowFrame(buffFrame)
     local glowFrame = CreateFrame("Frame", nil, buffFrame)
     glowFrame:SetAllPoints()
     glowFrame:SetFrameLevel(buffFrame:GetFrameLevel() + 10)
 
     local glow = glowFrame:CreateTexture(nil, "OVERLAY")
-    --glow:SetAtlas("spellbook-item-unassigned-glow")
-    glow:SetAtlas("newplayertutorial-drag-slotgreen")
+
+    if addon.cufPool[buffFrame] then
+        glow:SetAtlas("RaidFrame-TargetFrame")
+    else
+        --glow:SetAtlas("spellbook-item-unassigned-glow")
+        glow:SetAtlas("newplayertutorial-drag-slotgreen")
+    end
+
     glow:SetDesaturated(true)
-    glow:SetTexCoord(.25, .75, .25, .75)
 
-    local padding = addon.db.glowPadding
-    glow:SetPoint("TOPLEFT", -padding, padding)
-    glow:SetPoint("BOTTOMRIGHT", padding, -padding)
-
+    buffFrame.glowFrame = glowFrame
     buffFrame.glow = glow
+
+    addon:UpdateGlowLayout(buffFrame)
 end
 
 ---------------------------------------------------------------
@@ -431,15 +482,9 @@ end
 function addon:InitDatabase()
     LifebloomGlowDB = LifebloomGlowDB or CopyTable(defaults)
 
-    local ver = LifebloomGlowDB.ver or 0
-    if ver < 1 then
-        LifebloomGlowDB = CopyTable(defaults)
-    else
-        for k in pairs(defaults) do
-            if LifebloomGlowDB[k] == nil then
-                LifebloomGlowDB = CopyTable(defaults)
-                break
-            end
+    for k, v in pairs(defaults) do
+        if LifebloomGlowDB[k] == nil then
+            LifebloomGlowDB[k] = v
         end
     end
 

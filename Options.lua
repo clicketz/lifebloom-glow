@@ -162,18 +162,18 @@ function addon:Options()
     -- glow size slider
     local sizeSlider = CreateFrame("Slider", addonName .. "SizeSlider", panel, "OptionsSliderTemplate")
     sizeSlider:SetPoint("TOPLEFT", rejuvColorButton, "BOTTOMLEFT", 0, -30)
-    sizeSlider:SetMinMaxValues(0, 10)
-    sizeSlider:SetValueStep(1)
+    sizeSlider:SetMinMaxValues(0.1, 2.5)
+    sizeSlider:SetValueStep(0.05)
     sizeSlider:SetObeyStepOnDrag(true)
-    sizeSlider:SetValue(self.db.glowPadding)
-    sizeSlider.Low:SetText("0")
-    sizeSlider.High:SetText("10")
-    sizeSlider.Text:SetText("Glow Padding: " .. self.db.glowPadding .. " px")
-    sizeSlider.tooltipText = "How many pixels the glow extends beyond the edge of the buff icon on each side. Takes effect after a UI reload."
+    sizeSlider:SetValue(self.db.glowMult or 1.0)
+    sizeSlider.Low:SetText("0.1")
+    sizeSlider.High:SetText("2.5")
+    sizeSlider.Text:SetText(string.format("Glow Scale: %.2f", self.db.glowMult or 1.0))
+    sizeSlider.tooltipText = "Scale of the border. Default is 1.0."
     sizeSlider:SetScript("OnValueChanged", function(s, value)
-        value = math.floor(value + 0.5)
-        self.db.glowPadding = value
-        s.Text:SetText("Glow Padding: " .. value .. " px")
+        self.db.glowMult = value
+        s.Text:SetText(string.format("Glow Scale: %.2f", value))
+        self:UpdateAllGlowLayouts()
     end)
     sizeSlider:SetScript("OnEnter", function(s)
         GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
