@@ -78,8 +78,17 @@ function addon:UpdateGlowLayout(buffFrame)
 
     local w, h = buffFrame:GetSize()
 
-    if w == 0 then w = 20 end
-    if h == 0 then h = 20 end
+    if not w or issecretvalue(w) or w == 0 then
+        w = buffFrame._lbgCachedWidth or 20
+    else
+        buffFrame._lbgCachedWidth = w
+    end
+
+    if not h or issecretvalue(h) or h == 0 then
+        h = buffFrame._lbgCachedHeight or 20
+    else
+        buffFrame._lbgCachedHeight = h
+    end
 
     local widthOffset = (w * mult - w) / 2
     local heightOffset = (h * mult - h) / 2
