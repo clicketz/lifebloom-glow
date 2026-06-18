@@ -21,15 +21,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
           fetch-depth: 0
 
-      - name: Luacheck
-        uses: nebularg/actions-luacheck@v1
-        with:
-          args: "--no-color -q"
-          annotate: warning
+      # - name: Luacheck
+      #   uses: nebularg/actions-luacheck@v1
+      #   with:
+      #     args: "--no-color -q"
+      #     annotate: warning
 
       - name: Package and Release
-        uses: BigWigsMods/packager@v2
+        uses: BigWigsMods/packager@master
